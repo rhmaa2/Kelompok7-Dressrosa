@@ -11,8 +11,8 @@ export default function Home() {
 
         <nav>
             <Link href="/login">LOGIN</Link>{"   |"}
-            <Link href="/pengajuan">PENGAJUAN</Link>{"   |"}
-            <Link href="/status">STATUS</Link>{"   |   "}
+            <Link href="/pengajuan">PENGAJUAN PEMINJAMAN</Link>{"   |"}
+            <Link href="/status">STATUS PEMINJAMAN</Link>{"   |   "}
             <Link href="/approval">APPROVAL</Link>
         </nav>
 
