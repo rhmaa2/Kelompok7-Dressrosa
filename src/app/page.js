@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-const app = "CampRent";
-const desc = "Peminjaman Alat Camping & Pendakian";
+const app = "EVENTRA";
+const desc = "Peminjaman Perlengkapan Pesta & Acara";
 
 export default function Home() {
     return (
