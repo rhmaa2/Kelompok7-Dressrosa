@@ -41,7 +41,6 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    // TODO: ganti dengan pemanggilan API asli (belum ada backend)
     setTimeout(() => {
       login(form.email);
       setLoading(false);
