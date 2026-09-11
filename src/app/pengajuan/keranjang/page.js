@@ -76,7 +76,6 @@ export default function KeranjangPage() {
                     </button>
                   </div>
 
-                  {/* Tombol Hapus */}
                   <button
                     onClick={() => handleRemoveItem(item.id)}
                     className="text-red-500 hover:text-red-700 text-xs font-semibold"
