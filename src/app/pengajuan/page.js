@@ -35,7 +35,6 @@ export default function KatalogPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Tombol Beranda & Tombol Keranjang */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
           <Link href="/" className="inline-block mb-2 text-xs text-blue-600 hover:underline font-semibold">
@@ -56,8 +55,7 @@ export default function KatalogPage() {
           )}
         </Link>
       </div>
-      
-      {/* Input Search & Filter */}
+
       <div className="flex flex-col md:flex-row gap-4 mb-8">
         <input
           type="text"
@@ -80,19 +78,12 @@ export default function KatalogPage() {
         </select>
       </div>
 
-      {/* Grid Katalog */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {filteredAlat.length > 0 ? (
           filteredAlat.map((alat) => (
             <div key={alat.id} className="border rounded-lg p-4 shadow-sm bg-white flex flex-col justify-between">
               <BarangCard alat={alat} />
               
-              <Link
-                href={`/pengajuan/${alat.id}`}
-                className="mt-4 text-center bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium py-2 px-4 rounded-lg transition"
-              >
-                Lihat Detail & Sewa
-              </Link>
             </div>
           ))
         ) : (

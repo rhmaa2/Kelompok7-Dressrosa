@@ -7,7 +7,6 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [cartItems, setCartItems] = useState([]);
   
-  // State untuk form data peminjam
   const [formData, setFormData] = useState({
     namaPeminjam: "",
     namaAcara: "",
@@ -16,13 +15,11 @@ export default function CheckoutPage() {
     catatan: "",
   });
 
-  // Ambil data keranjang dari localStorage saat halaman pertama kali dimuat
   useEffect(() => {
     const savedCart = JSON.parse(localStorage.getItem("keranjangSewa")) || [];
     setCartItems(savedCart);
   }, []);
 
-  // Hitung total harga sewa per hari
   const totalHargaPerHari = cartItems.reduce(
     (total, item) => total + item.harga_sewa_per_hari * item.quantity,
     0
@@ -40,13 +37,9 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Simulasi pengiriman data pengajuan berhasil
     alert(`Pengajuan berhasil dikirim atas nama ${formData.namaPeminjam}!`);
-    
-    // Bersihkan keranjang setelah berhasil
+  
     localStorage.removeItem("keranjangSewa");
-    
-    // Redirect kembali ke halaman katalog atau halaman sukses
     router.push("/pengajuan");
   };
 
@@ -59,7 +52,6 @@ export default function CheckoutPage() {
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Checkout Pengajuan Alat</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Ringkasan Keranjang */}
         <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Ringkasan Alat Disewa</h2>
           
@@ -89,7 +81,6 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* Form Data Peminjam */}
         <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Formulir Peminjaman</h2>
           
