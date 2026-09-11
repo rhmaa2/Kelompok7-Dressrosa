@@ -75,6 +75,7 @@ export default function KatalogPage() {
           <option value="Sound System">Sound System</option>
           <option value="Meja">Meja</option>
           <option value="Kursi">Kursi</option>
+          <option value="Dekorasi">Dekorasi</option>
         </select>
       </div>
 
