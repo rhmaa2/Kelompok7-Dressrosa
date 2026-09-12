@@ -1,118 +1,112 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getBarang, saveBarang } from "@/lib/store";
 import { formatRupiah } from "@/lib/utils";
 import FormBarang from "@/components/admin/FormBarang";
-import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 
-export default function AdminBarangPage() {
-  const [list, setList] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
+export default function AdminBarang() {
+  const [items, setItems] = useState([]);
   const [editing, setEditing] = useState(null);
-
-  function muatData() {
-    fetch("/api/barang")
-      .then((res) => res.json())
-      .then((data) =>
-        setList(Array.isArray(data) ? data.map((b) => ({ ...b, hargaSewa: b.harga_sewa })) : [])
-      );
-  }
+  const [show, setShow] = useState(false);
 
   useEffect(() => {
-    muatData();
+    setItems(getBarang());
   }, []);
 
-  function handleTambahBaru() {
+  function submit(data) {
+    const next = editing
+      ? items.map((x) => (x.id === editing.id ? { ...editing, ...data } : x))
+      : [...items, { ...data, id: Date.now() }];
+
+    saveBarang(next);
+    setItems(next);
     setEditing(null);
-    setModalOpen(true);
+    setShow(false);
   }
 
-  function handleEdit(barang) {
-    setEditing(barang);
-    setModalOpen(true);
-  }
-
-  function handleSubmit(data) {
-    const request = editing
-      ? fetch(`/api/barang/${editing.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        })
-      : fetch("/api/barang", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-
-    request.then(() => {
-      muatData();
-      setModalOpen(false);
-    });
-  }
-
-  function handleDelete(id) {
-    if (confirm("Hapus barang ini?")) {
-      fetch(`/api/barang/${id}`, { method: "DELETE" }).then(muatData);
-    }
+  function hapus(id) {
+    if (!confirm("Hapus barang ini?")) return;
+    const next = items.filter((x) => x.id !== id);
+    saveBarang(next);
+    setItems(next);
   }
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Kelola Barang</h1>
-          <p className="text-sm text-slate-500">Tambah, ubah, atau hapus barang di katalog</p>
+          <h1 className="text-3xl font-black">Kelola Barang</h1>
+          <p className="text-sm text-slate-500">
+            CRUD UI dengan state dan localStorage.
+          </p>
         </div>
-        <Button className="w-auto px-4" onClick={handleTambahBaru}>
+        <Button
+          onClick={() => {
+            setEditing(null);
+            setShow(true);
+          }}
+        >
           + Tambah Barang
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      {show && (
+        <div className="mt-5 rounded-xl border bg-white p-5">
+          <h2 className="mb-4 font-bold">
+            {editing ? "Edit Barang" : "Tambah Barang"}
+          </h2>
+          <FormBarang
+            initial={editing}
+            onSubmit={submit}
+            onCancel={() => setShow(false)}
+          />
+        </div>
+      )}
+
+      <div className="mt-6 overflow-x-auto rounded-xl border bg-white">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+          <thead className="bg-slate-50">
             <tr>
-              <th className="px-4 py-3">Nama</th>
-              <th className="px-4 py-3">Kategori</th>
-              <th className="px-4 py-3">Harga Sewa</th>
-              <th className="px-4 py-3">Jaminan</th>
-              <th className="px-4 py-3">Stok</th>
-              <th className="px-4 py-3">Aksi</th>
+              <th className="p-3">Barang</th>
+              <th className="p-3">Kategori</th>
+              <th className="p-3">Harga</th>
+              <th className="p-3">Stok</th>
+              <th className="p-3">Aksi</th>
             </tr>
           </thead>
           <tbody>
-            {list.map((b) => (
-              <tr key={b.id} className="border-t border-slate-100">
-                <td className="px-4 py-3">{b.gambar} {b.nama}</td>
-                <td className="px-4 py-3">{b.kategori}</td>
-                <td className="px-4 py-3">{formatRupiah(b.hargaSewa)}</td>
-                <td className="px-4 py-3">{formatRupiah(b.jaminan)}</td>
-                <td className="px-4 py-3">{b.stok}</td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-3">
-                    <button onClick={() => handleEdit(b)} className="text-emerald-600 hover:underline">
-                      Edit
-                    </button>
-                    <button onClick={() => handleDelete(b.id)} className="text-red-500 hover:underline">
-                      Hapus
-                    </button>
-                  </div>
+            {items.map((x) => (
+              <tr key={x.id} className="border-t">
+                <td className="p-3">
+                  {x.gambar} <b>{x.nama}</b>
+                </td>
+                <td className="p-3">{x.kategori}</td>
+                <td className="p-3">{formatRupiah(x.hargaSewa)}</td>
+                <td className="p-3">{x.stok}</td>
+                <td className="p-3">
+                  <button
+                    onClick={() => {
+                      setEditing(x);
+                      setShow(true);
+                    }}
+                    className="mr-3 text-blue-600"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => hapus(x.id)}
+                    className="text-red-600"
+                  >
+                    Hapus
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "Edit Barang" : "Tambah Barang"}>
-        <FormBarang
-          initialData={editing}
-          onSubmit={handleSubmit}
-          onCancel={() => setModalOpen(false)}
-        />
-      </Modal>
     </div>
   );
 }
