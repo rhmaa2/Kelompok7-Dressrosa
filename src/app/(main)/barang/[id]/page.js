@@ -1,112 +1,117 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { formatRupiah } from "@/lib/utils";
-import { addToCart } from "@/lib/cart";
 import Button from "@/components/ui/Button";
+import { getBarang } from "@/lib/store";
+import { addToCart } from "@/lib/cart";
+import { formatRupiah } from "@/lib/utils";
 
-export default function DetailBarangPage({ params }) {
+export default function DetailBarangPage() {
+  const { id } = useParams();
   const router = useRouter();
-  const [barang, setBarang] = useState(undefined);
+  const [barang, setBarang] = useState(null);
+  const [qty, setQty] = useState(1);
+  const [added, setAdded] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/barang/${params.id}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setBarang(data ? { ...data, hargaSewa: data.harga_sewa } : null));
-  }, [params.id]);
+    setBarang(getBarang().find((x) => String(x.id) === String(id)) || false);
+  }, [id]);
 
-  const [qty, setQty] = useState(1);
-  const [ditambahkan, setDitambahkan] = useState(false);
-
-  if (barang === undefined) {
-    return <p className="py-16 text-center text-sm text-slate-400">Memuat...</p>;
+  if (barang === null) {
+    return <p className="p-12 text-center">Memuat...</p>;
   }
 
-  if (!barang) {
+  if (barang === false) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-16 text-center text-slate-500">
+      <div className="p-12 text-center">
         Barang tidak ditemukan.{" "}
-        <Link href="/barang" className="text-emerald-600 hover:underline">
-          Kembali ke katalog
+        <Link href="/barang" className="text-emerald-600">
+          Kembali
         </Link>
       </div>
     );
   }
 
-  function handleTambah() {
-    addToCart(barang, qty);
-    setDitambahkan(true);
-  }
-
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <Link href="/barang" className="mb-4 inline-block text-sm text-slate-500 hover:text-emerald-600">
-        ← Kembali ke katalog
+    <div className="mx-auto max-w-5xl px-4 py-8">
+      <Link href="/barang" className="text-sm text-slate-500">
+        ← Katalog
       </Link>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div className="flex h-64 items-center justify-center rounded-xl bg-slate-100 text-7xl">
-          {barang.gambar}
+      <div className="mt-4 grid gap-8 md:grid-cols-2">
+        <div className="flex h-80 items-center justify-center overflow-hidden rounded-2xl bg-slate-100">
+          <img
+            src={barang.gambar}
+            alt={barang.nama}
+            className="h-full w-full object-cover"
+          />
         </div>
 
         <div>
-          <p className="text-sm text-slate-500">{barang.kategori}</p>
-          <h1 className="mb-2 text-2xl font-bold text-slate-800">{barang.nama}</h1>
-          <p className="mb-4 text-sm text-slate-600">{barang.deskripsi}</p>
+          <p className="text-sm font-semibold text-emerald-600">
+            {barang.kategori}
+          </p>
+          <h1 className="mt-1 text-3xl font-black">{barang.nama}</h1>
+          <p className="mt-4 text-slate-600">{barang.deskripsi}</p>
 
-          <div className="mb-4 space-y-1 text-sm">
+          <div className="my-6 space-y-2 text-sm">
             <p>
-              <span className="text-slate-500">Harga sewa: </span>
-              <span className="font-medium text-emerald-600">{formatRupiah(barang.hargaSewa)}/hari</span>
+              Harga: <b>{formatRupiah(barang.hargaSewa)}/hari</b>
             </p>
             <p>
-              <span className="text-slate-500">Jaminan: </span>
-              <span className="font-medium">{formatRupiah(barang.jaminan)}</span>
+              Jaminan: <b>{formatRupiah(barang.jaminan)}</b>
             </p>
             <p>
-              <span className="text-slate-500">Stok tersedia: </span>
-              <span className="font-medium">{barang.stok}</span>
+              Stok: <b>{barang.stok}</b>
             </p>
           </div>
 
-          {barang.stok === 0 ? (
-            <p className="text-sm font-medium text-red-500">Stok sedang habis</p>
-          ) : (
+          {barang.stok > 0 ? (
             <>
               <div className="mb-4 flex items-center gap-3">
-                <label className="text-sm text-slate-600">Jumlah:</label>
-                <div className="flex items-center rounded-lg border border-slate-300">
+                <span className="text-sm">Jumlah</span>
+                <div className="flex items-center rounded-lg border">
                   <button
                     onClick={() => setQty((q) => Math.max(1, q - 1))}
-                    className="px-3 py-1 text-slate-500 hover:bg-slate-50"
+                    className="px-3 py-2"
                   >
-                    -
+                    −
                   </button>
-                  <span className="w-8 text-center text-sm">{qty}</span>
+                  <span className="w-8 text-center">{qty}</span>
                   <button
-                    onClick={() => setQty((q) => Math.min(barang.stok, q + 1))}
-                    className="px-3 py-1 text-slate-500 hover:bg-slate-50"
+                    onClick={() =>
+                      setQty((q) => Math.min(barang.stok, q + 1))
+                    }
+                    className="px-3 py-2"
                   >
                     +
                   </button>
                 </div>
               </div>
 
-              <Button onClick={handleTambah}>
-                {ditambahkan ? "✓ Ditambahkan ke Keranjang" : "Tambah ke Keranjang"}
+              <Button
+                className="w-full"
+                onClick={() => {
+                  addToCart(barang, qty);
+                  setAdded(true);
+                }}
+              >
+                {added ? "✓ Ditambahkan" : "Tambah ke Keranjang"}
               </Button>
 
-              {ditambahkan && (
+              {added && (
                 <button
                   onClick={() => router.push("/keranjang")}
-                  className="mt-2 w-full text-center text-sm text-emerald-600 hover:underline"
+                  className="mt-3 w-full text-sm text-emerald-600"
                 >
-                  Lihat Keranjang →
+                  Lihat keranjang →
                 </button>
               )}
             </>
+          ) : (
+            <p className="font-semibold text-red-600">Stok habis</p>
           )}
         </div>
       </div>

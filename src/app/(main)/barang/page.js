@@ -3,53 +3,40 @@
 import { useEffect, useState } from "react";
 import FilterBarang from "@/components/barang/FilterBarang";
 import BarangList from "@/components/barang/BarangList";
+import { getBarang, seedStore } from "@/lib/store";
 
 export default function BarangPage() {
-  const [daftarBarang, setDaftarBarang] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [kategoriAktif, setKategoriAktif] = useState("Semua");
+  const [items, setItems] = useState([]);
   const [keyword, setKeyword] = useState("");
+  const [kategori, setKategori] = useState("Semua");
 
   useEffect(() => {
-    fetch("/api/barang")
-      .then((res) => res.json())
-      .then((data) => {
-        const mapped = Array.isArray(data)
-          ? data.map((b) => ({ ...b, hargaSewa: b.harga_sewa }))
-          : [];
-        setDaftarBarang(mapped);
-      })
-      .finally(() => setLoading(false));
+    seedStore();
+    setItems(getBarang());
   }, []);
 
-  const kategoriList = ["Semua", ...new Set(daftarBarang.map((b) => b.kategori))];
+  const categories = ["Semua", ...new Set(items.map((x) => x.kategori))];
 
-  const hasilFilter = daftarBarang.filter((barang) => {
-    const cocokKategori = kategoriAktif === "Semua" || barang.kategori === kategoriAktif;
-    const cocokKeyword = barang.nama.toLowerCase().includes(keyword.toLowerCase());
-    return cocokKategori && cocokKeyword;
-  });
+  const filtered = items.filter(
+    (x) =>
+      (kategori === "Semua" || x.kategori === kategori) &&
+      x.nama.toLowerCase().includes(keyword.toLowerCase())
+  );
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="mb-1 text-2xl font-bold text-slate-800">Katalog Barang</h1>
-      <p className="mb-6 text-sm text-slate-500">
-        Pilih perlengkapan yang kamu butuhkan untuk acaramu
+    <div className="mx-auto max-w-6xl px-4 py-8">
+      <h1 className="text-3xl font-black">Katalog Barang</h1>
+      <p className="mt-1 mb-6 text-sm text-slate-500">
+        Cari dan pilih perlengkapan untuk acaramu.
       </p>
-
       <FilterBarang
-        kategoriList={kategoriList}
-        kategoriAktif={kategoriAktif}
-        onKategoriChange={setKategoriAktif}
+        kategoriList={categories}
+        kategoriAktif={kategori}
+        onKategoriChange={setKategori}
         keyword={keyword}
         onKeywordChange={setKeyword}
       />
-
-      {loading ? (
-        <p className="py-12 text-center text-sm text-slate-400">Memuat barang...</p>
-      ) : (
-        <BarangList items={hasilFilter} />
-      )}
+      <BarangList items={filtered} />
     </div>
   );
 }

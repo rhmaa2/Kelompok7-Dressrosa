@@ -2,70 +2,66 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { getCart, removeFromCart, updateQty } from "@/lib/cart";
 import KeranjangItem from "@/components/peminjaman/KeranjangItem";
-import Button from "@/components/ui/Button";
-import { getCart, updateQty, removeFromCart } from "@/lib/cart";
 import { formatRupiah } from "@/lib/utils";
+import Button from "@/components/ui/Button";
 
 export default function KeranjangPage() {
-  const router = useRouter();
   const [cart, setCart] = useState([]);
 
   useEffect(() => {
     setCart(getCart());
   }, []);
 
-  function handleQtyChange(barangId, qty) {
-    setCart(updateQty(barangId, qty));
-  }
-
-  function handleRemove(barangId) {
-    setCart(removeFromCart(barangId));
-  }
-
-  const totalSewa = cart.reduce((sum, item) => sum + item.hargaSewa * item.qty, 0);
-  const totalJaminan = cart.reduce((sum, item) => sum + item.jaminan * item.qty, 0);
+  const sewa = cart.reduce((s, x) => s + x.hargaSewa * x.qty, 0);
+  const jaminan = cart.reduce((s, x) => s + x.jaminan * x.qty, 0);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold text-slate-800">Keranjang Sewa</h1>
+    <div className="mx-auto max-w-4xl px-4 py-8">
+      <h1 className="text-3xl font-black">Keranjang Sewa</h1>
 
-      {cart.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 py-12 text-center text-slate-400">
-          Keranjang masih kosong.{" "}
-          <Link href="/barang" className="text-emerald-600 hover:underline">
+      {!cart.length ? (
+        <div className="mt-6 rounded-xl border border-dashed p-12 text-center text-slate-500">
+          Keranjang masih kosong.
+          <br />
+          <Link
+            href="/barang"
+            className="mt-2 inline-block font-semibold text-emerald-600"
+          >
             Lihat katalog
           </Link>
         </div>
       ) : (
-        <>
-          <div className="rounded-xl border border-slate-200 bg-white px-4">
-            {cart.map((item) => (
+        <div className="mt-6 grid gap-6 md:grid-cols-[1fr_320px]">
+          <div className="rounded-xl border bg-white px-5">
+            {cart.map((x) => (
               <KeranjangItem
-                key={item.barangId}
-                item={item}
-                onQtyChange={handleQtyChange}
-                onRemove={handleRemove}
+                key={x.barangId}
+                item={x}
+                onQty={(q) => setCart(updateQty(x.barangId, q))}
+                onRemove={() => setCart(removeFromCart(x.barangId))}
               />
             ))}
           </div>
 
-          <div className="mt-6 space-y-1 rounded-xl border border-slate-200 bg-white p-4 text-sm">
-            <div className="flex justify-between text-slate-600">
-              <span>Total sewa/hari</span>
-              <span>{formatRupiah(totalSewa)}</span>
+          <aside className="h-fit rounded-xl border bg-white p-5">
+            <h2 className="font-bold">Ringkasan</h2>
+            <div className="mt-4 space-y-2 text-sm">
+              <p className="flex justify-between">
+                <span>Total sewa/hari</span>
+                <b>{formatRupiah(sewa)}</b>
+              </p>
+              <p className="flex justify-between">
+                <span>Total jaminan</span>
+                <b>{formatRupiah(jaminan)}</b>
+              </p>
             </div>
-            <div className="flex justify-between text-slate-600">
-              <span>Total jaminan</span>
-              <span>{formatRupiah(totalJaminan)}</span>
-            </div>
-          </div>
-
-          <Button className="mt-4" onClick={() => router.push("/checkout")}>
-            Lanjut ke Checkout
-          </Button>
-        </>
+            <Link href="/checkout" className="mt-5 block">
+              <Button className="w-full">Lanjut Checkout</Button>
+            </Link>
+          </aside>
+        </div>
       )}
     </div>
   );

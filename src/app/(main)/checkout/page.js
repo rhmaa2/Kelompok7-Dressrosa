@@ -6,23 +6,24 @@ import FormCheckout from "@/components/peminjaman/FormCheckout";
 import { getCart } from "@/lib/cart";
 
 export default function CheckoutPage() {
-  const [cart, setCart] = useState([]);
-  const [loaded, setLoaded] = useState(false);
+  const [cart, setCart] = useState(null);
 
   useEffect(() => {
     setCart(getCart());
-    setLoaded(true);
   }, []);
+
+  if (cart === null) {
+    return <p className="p-12 text-center">Memuat...</p>;
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold text-slate-800">Checkout Pengajuan</h1>
-
-      {loaded && cart.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 py-12 text-center text-slate-400">
-          Keranjang kosong, tidak ada yang bisa di-checkout.{" "}
-          <Link href="/barang" className="text-emerald-600 hover:underline">
-            Lihat katalog
+      <h1 className="mb-6 text-3xl font-black">Checkout Pengajuan</h1>
+      {!cart.length ? (
+        <div className="rounded-xl border border-dashed p-12 text-center text-slate-500">
+          Keranjang kosong.{" "}
+          <Link href="/barang" className="text-emerald-600">
+            Kembali ke katalog
           </Link>
         </div>
       ) : (
