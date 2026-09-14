@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useEffect, useState } from "react";
 import { getBarang, saveBarang } from "@/lib/store";
 import { formatRupiah } from "@/lib/utils";
@@ -110,3 +111,4 @@ export default function AdminBarang() {
     </div>
   );
 }
+

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Card from "@/components/ui/Card";
 import { getPengajuan } from "@/lib/store";
 
+
 export default function PetugasDashboard() {
   const [p, setP] = useState([]);
 
@@ -22,6 +23,7 @@ export default function PetugasDashboard() {
           </b>
         </Card>
         <Card>
+          
           <p className="text-sm text-slate-500">Siap dikirim/diambil</p>
           <b className="text-3xl text-indigo-600">
             {

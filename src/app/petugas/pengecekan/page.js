@@ -9,6 +9,7 @@ export default function Pengecekan() {
   const [items, setItems] = useState([]);
   const [notes, setNotes] = useState({});
 
+
   useEffect(() => {
     setItems(getPengajuan());
   }, []);
@@ -18,7 +19,6 @@ export default function Pengecekan() {
     savePengajuan(next);
     setItems(next);
   }
-
   const keluar = items.filter((p) => p.status === "DIPROSES");
   const siap = items.filter((p) =>
     ["SIAP_DIAMBIL", "SIAP_DIKIRIM"].includes(p.status)

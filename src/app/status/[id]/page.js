@@ -6,8 +6,6 @@ import Link from "next/link";
 import { getPengajuan, savePengajuan } from "@/lib/store";
 import { formatRupiah, formatTanggal, statusLabel } from "@/lib/utils";
 
-// Tahapan alur normal sebuah pengajuan. "SIAP" mewakili dua kemungkinan status
-// (siap diambil / siap diantar) tergantung metode yang dipilih penyewa.
 const ALUR = [
   { key: "PENDING", cocok: ["PENDING"] },
   { key: "APPROVED", cocok: ["APPROVED"] },
@@ -61,6 +59,7 @@ export default function StatusDetail() {
   function batalkan() {
     updateStatus({ status: "CANCELLED" });
   }
+
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -203,3 +202,4 @@ export default function StatusDetail() {
     </div>
   );
 }
+

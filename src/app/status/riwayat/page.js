@@ -7,7 +7,7 @@ import { formatTanggal, statusClass, statusLabel } from "@/lib/utils";
 
 export default function RiwayatPage() {
   const [list, setList] = useState([]);
-
+  
   useEffect(() => {
     const u = getCurrentUser();
     setList(
@@ -76,3 +76,4 @@ export default function RiwayatPage() {
     </div>
   );
 }
+

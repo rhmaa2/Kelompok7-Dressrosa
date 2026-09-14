@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-
 export async function POST(request) {
   const { email, password } = await request.json();
   if (!email || !password) {

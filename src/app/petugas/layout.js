@@ -15,10 +15,13 @@ export default function PetugasLayout({ children }) {
       router.replace("/login");
       return;
     }
+    
     setUser(current);
   }, [router]);
 
+
   if (!user) return null;
+
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 md:flex-row">
