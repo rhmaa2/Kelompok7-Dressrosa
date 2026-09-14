@@ -50,7 +50,7 @@ export default function Pembayaran() {
                 {p.status === "APPROVED" && !p.sudahBayar && (
                   <button
                     onClick={() => verify(p.id)}
-                    className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white"
+                    className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white"
                   >
                     Verifikasi
                   </button>

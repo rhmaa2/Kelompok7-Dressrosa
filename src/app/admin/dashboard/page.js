@@ -41,7 +41,7 @@ export default function Dashboard() {
         </Card>
         <Card>
           <p className="text-xs text-slate-500">Pendapatan Sewa</p>
-          <b className="text-xl text-emerald-600">
+          <b className="text-xl text-blue-600">
             {formatRupiah(revenue)}
           </b>
         </Card>
@@ -50,7 +50,7 @@ export default function Dashboard() {
       <div className="mt-6 rounded-xl border bg-white p-5">
         <h2 className="font-bold">Alur sistem</h2>
         <p className="mt-2 text-sm text-slate-500">
-          PENDING → APPROVED → DIPROSES → SIAP → SEDANG DISEWA → COMPLETED
+          PENDING → APPROVED → DIPROSES → SIAP → SEDANG DISEWA → DIKEMBALIKAN → COMPLETED
         </p>
       </div>
     </div>
