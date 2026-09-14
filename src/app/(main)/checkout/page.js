@@ -22,7 +22,7 @@ export default function CheckoutPage() {
       {!cart.length ? (
         <div className="rounded-xl border border-dashed p-12 text-center text-slate-500">
           Keranjang kosong.{" "}
-          <Link href="/barang" className="text-emerald-600">
+          <Link href="/barang" className="text-blue-600">
             Kembali ke katalog
           </Link>
         </div>

@@ -27,7 +27,7 @@ export default function KeranjangPage() {
           <br />
           <Link
             href="/barang"
-            className="mt-2 inline-block font-semibold text-emerald-600"
+            className="mt-2 inline-block font-semibold text-blue-600"
           >
             Lihat katalog
           </Link>

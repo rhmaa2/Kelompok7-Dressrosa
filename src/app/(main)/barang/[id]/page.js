@@ -27,7 +27,7 @@ export default function DetailBarangPage() {
     return (
       <div className="p-12 text-center">
         Barang tidak ditemukan.{" "}
-        <Link href="/barang" className="text-emerald-600">
+        <Link href="/barang" className="text-blue-600">
           Kembali
         </Link>
       </div>
@@ -50,7 +50,7 @@ export default function DetailBarangPage() {
         </div>
 
         <div>
-          <p className="text-sm font-semibold text-emerald-600">
+          <p className="text-sm font-semibold text-blue-600">
             {barang.kategori}
           </p>
           <h1 className="mt-1 text-3xl font-black">{barang.nama}</h1>
@@ -104,7 +104,7 @@ export default function DetailBarangPage() {
               {added && (
                 <button
                   onClick={() => router.push("/keranjang")}
-                  className="mt-3 w-full text-sm text-emerald-600"
+                  className="mt-3 w-full text-sm text-blue-600"
                 >
                   Lihat keranjang →
                 </button>
