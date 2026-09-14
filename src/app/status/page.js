@@ -1,79 +1,74 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import StatusBadge from "@/components/statusBadge";
+import { getCurrentUser, getPengajuan, seedStore } from "@/lib/store";
+import { formatRupiah, formatTanggal, statusClass, statusLabel } from "@/lib/utils";
 
 export default function StatusPage() {
-  const [daftarPengajuan, setDaftarPengajuan] = useState([]);
-  const [filterStatus, setFilterStatus] = useState("SEMUA");
+  const [list, setList] = useState([]);
 
   useEffect(() => {
-    const data = JSON.parse(localStorage.getItem("daftarPengajuan")) || [];
-    setDaftarPengajuan(data);
+    seedStore();
+    const u = getCurrentUser();
+    setList(
+      getPengajuan()
+        .filter((p) => (u ? p.userId === u.id : true))
+        .filter((p) => !["COMPLETED", "CANCELLED", "REJECTED"].includes(p.status))
+    );
   }, []);
 
-  const pengajuanAktif = daftarPengajuan.filter(
-    (item) => item.status === "PENDING" || item.status === "APPROVED"
-  );
-
-  const dataTampil =
-    filterStatus === "SEMUA"
-      ? pengajuanAktif
-      : pengajuanAktif.filter((item) => item.status === filterStatus);
-
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold text-gray-800 mb-2">Status Peminjaman</h1>
-      <p className="text-sm text-gray-500 mb-6">Pantau pengajuan peminjaman yang masih berjalan.</p>
+    <div className="mx-auto max-w-5xl px-4 py-8">
+      <Link href="/barang" className="text-sm text-slate-500 hover:text-slate-700">
+        ← Beranda
+      </Link>
 
-      <div className="flex gap-2 mb-6">
-        {["SEMUA", "PENDING", "APPROVED"].map((opsi) => (
-          <button
-            key={opsi}
-            onClick={() => setFilterStatus(opsi)}
-            className={`px-4 py-2 text-sm rounded-lg border transition ${
-              filterStatus === opsi
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
-            }`}
-          >
-            {opsi === "SEMUA" ? "Semua" : opsi}
-          </button>
-        ))}
-      </div>
+      <h1 className="mt-4 text-3xl font-black">Status Peminjaman</h1>
+      <p className="mt-1 text-sm text-slate-500">
+        Pantau pengajuan yang masih berjalan.
+      </p>
 
-      {dataTampil.length === 0 ? (
-        <div className="bg-white p-8 rounded-lg shadow-md border border-gray-200 text-center">
-          <p className="text-gray-500 text-sm">Belum ada pengajuan peminjaman aktif.</p>
-          <Link href="/pengajuan" className="inline-block mt-3 text-sm text-blue-600 hover:underline">
-            Lihat Katalog Alat &rarr;
-          </Link>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {dataTampil.map((item) => (
+      <div className="mt-6 space-y-4">
+        {!list.length ? (
+          <div className="rounded-xl border border-dashed p-10 text-center text-slate-400">
+            Belum ada peminjaman aktif.
+          </div>
+        ) : (
+          list.map((p) => (
             <Link
-              key={item.id}
-              href={`/status/${item.id}`}
-              className="block bg-white p-5 rounded-lg shadow-md border border-gray-200 hover:border-blue-400 transition"
+              href={`/status/${p.id}`}
+              key={p.id}
+              className="block rounded-2xl border bg-white p-5 shadow-sm hover:border-blue-300"
             >
-              <div className="flex justify-between items-start mb-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className="font-semibold text-gray-800">{item.namaAcara}</h2>
-                  <p className="text-xs text-gray-500">Atas nama {item.namaPeminjam}</p>
+                  <p className="text-xs text-slate-400">
+                    Pengajuan #{p.id}
+                  </p>
+                  <h2 className="font-bold">
+                    {p.items.map((i) => `${i.nama} ×${i.qty}`).join(", ")}
+                  </h2>
                 </div>
-                <StatusBadge status={item.status} />
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClass(
+                    p.status
+                  )}`}
+                >
+                  {statusLabel[p.status] || p.status}
+                </span>
               </div>
-              <p className="text-xs text-gray-500">
-                {item.tanggalMulai} &rarr; {item.tanggalSelesai}
-              </p>
-              <p className="text-sm font-semibold text-blue-600 mt-2">
-                Rp {Number(item.totalHarga).toLocaleString()}
-              </p>
+              <div className="mt-3 flex justify-between text-sm text-slate-500">
+                <span>
+                  {formatTanggal(p.tanggalMulai)} –{" "}
+                  {formatTanggal(p.tanggalSelesai)}
+                </span>
+                <b className="text-slate-700">{formatRupiah(p.totalBayar)}</b>
+              </div>
             </Link>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 }

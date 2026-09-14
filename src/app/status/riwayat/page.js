@@ -1,56 +1,78 @@
 "use client";
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import StatusBadge from "@/components/statusBadge";
 
-const STATUS_RIWAYAT = ["COMPLETED", "REJECTED", "CANCELLED"];
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { getCurrentUser, getPengajuan } from "@/lib/store";
+import { formatTanggal, statusClass, statusLabel } from "@/lib/utils";
 
 export default function RiwayatPage() {
-  const [daftarPengajuan, setDaftarPengajuan] = useState([]);
+  const [list, setList] = useState([]);
 
   useEffect(() => {
-    const data = JSON.parse(localStorage.getItem("daftarPengajuan")) || [];
-    setDaftarPengajuan(data);
+    const u = getCurrentUser();
+    setList(
+      getPengajuan()
+        .filter((p) => (u ? p.userId === u.id : true))
+        .filter((p) => ["COMPLETED", "CANCELLED", "REJECTED"].includes(p.status))
+    );
   }, []);
 
-  const riwayat = daftarPengajuan.filter((item) => STATUS_RIWAYAT.includes(item.status));
-
   return (
-    
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <Link href="/status" className="inline-block mb-6 text-sm text-blue-600 hover:underline">
-        ← Kembali ke Status Aktif
+    <div className="mx-auto max-w-5xl px-4 py-8">
+      <Link href="/barang" className="text-sm text-slate-500 hover:text-slate-700">
+        ← Status
       </Link>
 
-      <h1 className="text-3xl font-bold text-gray-800 mb-2">Riwayat Peminjaman</h1>
-      <p className="text-sm text-gray-500 mb-6">Pengajuan yang sudah selesai, ditolak, atau dibatalkan.</p>
+      <h1 className="mt-4 text-3xl font-black">Riwayat Peminjaman</h1>
 
-      {riwayat.length === 0 ? (
-        <div className="bg-white p-8 rounded-lg shadow-md border border-gray-200 text-center">
-          <p className="text-gray-500 text-sm">Belum ada riwayat peminjaman.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {riwayat.map((item) => (
-            <Link
-              key={item.id}
-              href={`/status/${item.id}`}
-              className="block bg-white p-5 rounded-lg shadow-md border border-gray-200 hover:border-blue-400 transition"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h2 className="font-semibold text-gray-800">{item.namaAcara}</h2>
-                  <p className="text-xs text-gray-500">Atas nama {item.namaPeminjam}</p>
-                </div>
-                <StatusBadge status={item.status} />
-              </div>
-              <p className="text-xs text-gray-500">
-                {item.tanggalMulai} &rarr; {item.tanggalSelesai}
-              </p>
-            </Link>
-          ))}
-        </div>
-      )}
+      <div className="mt-6 overflow-hidden rounded-xl border bg-white">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-slate-50">
+            <tr>
+              <th className="p-4">Pengajuan</th>
+              <th className="p-4">Periode</th>
+              <th className="p-4">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.map((p) => (
+              <tr key={p.id} className="border-t">
+                <td className="p-4">
+                  <Link
+                    href={`/status/${p.id}`}
+                    className="font-semibold text-blue-600"
+                  >
+                    #{p.id}
+                  </Link>
+                  <br />
+                  <span className="text-xs text-slate-500">
+                    {p.items.map((i) => i.nama).join(", ")}
+                  </span>
+                </td>
+                <td className="p-4">
+                  {formatTanggal(p.tanggalMulai)} –{" "}
+                  {formatTanggal(p.tanggalSelesai)}
+                </td>
+                <td className="p-4">
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs ${statusClass(
+                      p.status
+                    )}`}
+                  >
+                    {statusLabel[p.status] || p.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {!list.length && (
+          <p className="p-10 text-center text-slate-400">
+            Belum ada riwayat.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
