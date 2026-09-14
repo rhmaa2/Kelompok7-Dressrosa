@@ -125,3 +125,4 @@ export const dataAlat = [
     kondisi: "baik"
   }
 ];
+
