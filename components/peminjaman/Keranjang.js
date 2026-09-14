@@ -35,3 +35,4 @@ export default function Keranjang({ item, onQty, onRemove }) {
     </div>
   );
 }
+
