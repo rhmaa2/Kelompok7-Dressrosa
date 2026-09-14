@@ -1,120 +1,194 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getPengajuan, savePengajuan } from "@/lib/store";
 import { formatTanggal } from "@/lib/utils";
-import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 
-export default function PengecekanPage() {
-  const [list, setList] = useState([]);
-  const [catatan, setCatatan] = useState({});
-
-  function muatData() {
-    fetch("/api/pengajuan").then((res) => res.json()).then((data) => setList(Array.isArray(data) ? data : []));
-  }
+export default function Pengecekan() {
+  const [items, setItems] = useState([]);
+  const [notes, setNotes] = useState({});
 
   useEffect(() => {
-    muatData();
+    setItems(getPengajuan());
   }, []);
 
-  function handleCatatanChange(id, value) {
-    setCatatan((prev) => ({ ...prev, [id]: value }));
+  function update(id, patch) {
+    const next = items.map((p) => (p.id === id ? { ...p, ...patch } : p));
+    savePengajuan(next);
+    setItems(next);
   }
 
-  function updateStatus(id, patch) {
-    fetch(`/api/pengajuan/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    }).then(muatData);
-  }
-
-  function handleSiapKirim(p) {
-    updateStatus(p.id, { status: "SIAP", kondisiAwal: catatan[p.id] || "Kondisi baik, lengkap" });
-  }
-
-  function handlePengembalian(p, kondisi) {
-    updateStatus(p.id, { status: "COMPLETED", kondisiAkhir: kondisi });
-  }
-
-  const perluDisiapkan = list.filter((p) => p.status === "DIPROSES");
-  const perluDicekKembali = list.filter((p) => p.status === "SEDANG_DISEWA");
+  const keluar = items.filter((p) => p.status === "DIPROSES");
+  const siap = items.filter((p) =>
+    ["SIAP_DIAMBIL", "SIAP_DIKIRIM"].includes(p.status)
+  );
+  const disewa = items.filter((p) => p.status === "SEDANG_DI_SEWA");
+  const kembali = items.filter((p) => p.status === "DIKEMBALIKAN");
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="mb-1 text-2xl font-bold text-slate-800">Pengecekan Barang</h1>
-        <p className="text-sm text-slate-500">Cek kondisi barang sebelum kirim/ambil dan saat pengembalian</p>
-      </div>
+    <div>
+      <h1 className="text-3xl font-black">Pengecekan Perlengkapan</h1>
+      <p className="mt-1 text-sm text-slate-500">
+        Cek kondisi sebelum keluar, konfirmasi saat terkirim/diambil, saat
+        dikembalikan, dan finalisasi kondisi akhir.
+      </p>
 
-      <section>
-        <h2 className="mb-3 text-sm font-semibold text-slate-700">Barang Keluar (Siap Kirim/Diambil)</h2>
-        {perluDisiapkan.length === 0 ? (
-          <p className="text-sm text-slate-400">Tidak ada barang yang perlu disiapkan.</p>
-        ) : (
-          <div className="space-y-3">
-            {perluDisiapkan.map((p) => (
-              <Card key={p.id}>
-                <p className="mb-1 font-medium text-slate-800">
-                  #{p.id} — {p.userNama}
-                </p>
-                <p className="mb-2 text-sm text-slate-500">
-                  {p.items.map((it) => `${it.nama} x${it.qty}`).join(", ")} — {formatTanggal(p.tanggalMulai)}
-                </p>
-                <textarea
-                  placeholder="Catatan kondisi barang sebelum dikirim (opsional)"
-                  value={catatan[p.id] || ""}
-                  onChange={(e) => handleCatatanChange(p.id, e.target.value)}
-                  className="mb-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                  rows={2}
-                />
-                <Button className="w-auto px-4" onClick={() => handleSiapKirim(p)}>
-                  Tandai Siap {p.metode === "antar" ? "Dikirim" : "Diambil"}
-                </Button>
-              </Card>
-            ))}
-          </div>
-        )}
+      {/* 1. Barang keluar -> siapkan & tandai siap diambil/dikirim */}
+      <section className="mt-6">
+        <h2 className="mb-3 font-bold">Barang Keluar</h2>
+        <div className="space-y-3">
+          {keluar.map((p) => (
+            <div key={p.id} className="rounded-xl border bg-white p-5">
+              <b>
+                #{p.id} — {p.userNama}
+              </b>
+              <p className="mt-1 text-sm text-slate-500">
+                {p.items.map((i) => `${i.nama} ×${i.qty}`).join(", ")} •{" "}
+                {formatTanggal(p.tanggalMulai)}
+              </p>
+              <textarea
+                value={notes[p.id] || ""}
+                onChange={(e) =>
+                  setNotes({ ...notes, [p.id]: e.target.value })
+                }
+                placeholder="Catatan kondisi awal"
+                className="mt-3 w-full rounded-lg border p-2 text-sm"
+              />
+              <Button
+                className="mt-3"
+                onClick={() =>
+                  update(p.id, {
+                    status: p.metode === "antar" ? "SIAP_DIKIRIM" : "SIAP_DIAMBIL",
+                    kondisiAwal: notes[p.id] || "Baik dan lengkap",
+                  })
+                }
+              >
+                Tandai Siap
+              </Button>
+            </div>
+          ))}
+          {!keluar.length && (
+            <p className="text-sm text-slate-400">Tidak ada barang keluar.</p>
+          )}
+        </div>
       </section>
 
-      <section>
-        <h2 className="mb-3 text-sm font-semibold text-slate-700">Barang Kembali (Cek Kondisi Akhir)</h2>
-        {perluDicekKembali.length === 0 ? (
-          <p className="text-sm text-slate-400">Tidak ada barang yang perlu dicek pengembaliannya.</p>
-        ) : (
-          <div className="space-y-3">
-            {perluDicekKembali.map((p) => (
-              <Card key={p.id}>
-                <p className="mb-1 font-medium text-slate-800">
-                  #{p.id} — {p.userNama}
-                </p>
-                <p className="mb-3 text-sm text-slate-500">
-                  {p.items.map((it) => `${it.nama} x${it.qty}`).join(", ")} — jatuh tempo {formatTanggal(p.tanggalSelesai)}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => handlePengembalian(p, "Baik, jaminan dikembalikan penuh")}
-                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"
-                  >
-                    Kondisi Baik
-                  </button>
-                  <button
-                    onClick={() => handlePengembalian(p, "Rusak ringan, sebagian jaminan dipotong")}
-                    className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600"
-                  >
-                    Rusak Ringan
-                  </button>
-                  <button
-                    onClick={() => handlePengembalian(p, "Hilang/rusak berat, jaminan tidak dikembalikan")}
-                    className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600"
-                  >
-                    Hilang / Rusak Berat
-                  </button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
+      {/* 2. Barang siap -> konfirmasi sudah terkirim/diambil oleh penyewa */}
+      <section className="mt-8">
+        <h2 className="mb-3 font-bold">Barang Terkirim / Diambil</h2>
+        <div className="space-y-3">
+          {siap.map((p) => (
+            <div key={p.id} className="rounded-xl border bg-white p-5">
+              <b>
+                #{p.id} — {p.userNama}
+              </b>
+              <p className="mt-1 text-sm text-slate-500">
+                {p.items.map((i) => `${i.nama} ×${i.qty}`).join(", ")} •{" "}
+                {p.metode === "antar" ? "Diantar ke penyewa" : "Diambil sendiri"}
+              </p>
+              <Button
+                className="mt-3"
+                onClick={() => update(p.id, { status: "SEDANG_DI_SEWA" })}
+              >
+                {p.metode === "antar"
+                  ? "Tandai Sudah Terkirim"
+                  : "Tandai Sudah Diambil"}
+              </Button>
+            </div>
+          ))}
+          {!siap.length && (
+            <p className="text-sm text-slate-400">
+              Tidak ada barang yang menunggu pengiriman/pengambilan.
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* 3. Barang sedang disewa -> konfirmasi sudah dikembalikan penyewa */}
+      <section className="mt-8">
+        <h2 className="mb-3 font-bold">Konfirmasi Pengembalian</h2>
+        <div className="space-y-3">
+          {disewa.map((p) => (
+            <div key={p.id} className="rounded-xl border bg-white p-5">
+              <b>
+                #{p.id} — {p.userNama}
+              </b>
+              <p className="mt-1 text-sm text-slate-500">
+                Jatuh tempo {formatTanggal(p.tanggalSelesai)}
+              </p>
+              <Button
+                className="mt-3"
+                onClick={() => update(p.id, { status: "DIKEMBALIKAN" })}
+              >
+                Tandai Sudah Dikembalikan
+              </Button>
+            </div>
+          ))}
+          {!disewa.length && (
+            <p className="text-sm text-slate-400">
+              Tidak ada barang yang sedang disewa.
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* 4. Barang sudah dikembalikan -> cek kondisi & selesaikan pengajuan */}
+      <section className="mt-8">
+        <h2 className="mb-3 font-bold">Pengecekan Kondisi & Selesaikan</h2>
+        <div className="space-y-3">
+          {kembali.map((p) => (
+            <div key={p.id} className="rounded-xl border bg-white p-5">
+              <b>
+                #{p.id} — {p.userNama}
+              </b>
+              <p className="mt-1 text-sm text-slate-500">
+                {p.items.map((i) => `${i.nama} ×${i.qty}`).join(", ")}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  onClick={() =>
+                    update(p.id, {
+                      status: "COMPLETED",
+                      kondisiAkhir: "Baik, jaminan dikembalikan penuh",
+                    })
+                  }
+                  className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white"
+                >
+                  Kondisi Baik
+                </button>
+                <button
+                  onClick={() =>
+                    update(p.id, {
+                      status: "COMPLETED",
+                      kondisiAkhir: "Rusak ringan, sebagian jaminan dipotong",
+                    })
+                  }
+                  className="rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white"
+                >
+                  Rusak Ringan
+                </button>
+                <button
+                  onClick={() =>
+                    update(p.id, {
+                      status: "COMPLETED",
+                      kondisiAkhir:
+                        "Hilang/rusak berat, jaminan tidak dikembalikan",
+                    })
+                  }
+                  className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white"
+                >
+                  Hilang/Rusak Berat
+                </button>
+              </div>
+            </div>
+          ))}
+          {!kembali.length && (
+            <p className="text-sm text-slate-400">
+              Tidak ada barang yang menunggu pengecekan kondisi.
+            </p>
+          )}
+        </div>
       </section>
     </div>
   );
