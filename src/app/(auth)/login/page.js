@@ -11,7 +11,7 @@ export default function LoginPage() {
       <AuthForm mode="login" />
       <p className="mt-4 text-center text-sm text-slate-500">
         Belum punya akun?{" "}
-        <Link href="/register" className="font-semibold text-emerald-600">
+        <Link href="/register" className="font-semibold text-blue-600">
           Daftar
         </Link>
       </p>
