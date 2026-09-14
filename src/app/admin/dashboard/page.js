@@ -5,7 +5,6 @@ import Card from "@/components/ui/Card";
 import { getBarang, getPengajuan, getUsers } from "@/lib/store";
 import { formatRupiah } from "@/lib/utils";
 
-
 export default function Dashboard() {
   const [d, setD] = useState({ b: [], p: [], u: [] });
 
