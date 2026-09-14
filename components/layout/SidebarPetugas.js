@@ -5,13 +5,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { logout } from "@/lib/store";
 
 const LINKS = [
-  ["/admin/dashboard", "Dashboard"],
-  ["/admin/pengajuan", "Pengajuan"],
-  ["/admin/pembayaran", "Pembayaran"],
-  ["/admin/user", "User & Petugas"],
+  ["/petugas/dashboard", "Dashboard"],
+  ["/petugas/barang", "Kelola Barang"],
+  ["/petugas/pengecekan", "Pengecekan"],
 ];
 
-export default function SideAdmin() {
+export default function SidebarPetugas() {
   const path = usePathname();
   const router = useRouter();
 
@@ -25,7 +24,7 @@ export default function SideAdmin() {
       <div>
         <div className="p-5">
           <p className="text-xl font-black">EVENTRA</p>
-          <p className="text-xs text-slate-400">Admin</p>
+          <p className="text-xs text-slate-400">Petugas</p>
         </div>
 
         <div className="space-y-1 px-3 pb-4">
