@@ -7,6 +7,7 @@ import { getPengajuan, savePengajuan } from "@/lib/store";
 import { formatRupiah, formatTanggal, statusLabel } from "@/lib/utils";
 
 const ALUR = [
+
   { key: "PENDING", cocok: ["PENDING"] },
   { key: "APPROVED", cocok: ["APPROVED"] },
   { key: "DIPROSES", cocok: ["DIPROSES"] },
@@ -14,6 +15,7 @@ const ALUR = [
   { key: "SEDANG_DI_SEWA", cocok: ["SEDANG_DI_SEWA"] },
   { key: "DIKEMBALIKAN", cocok: ["DIKEMBALIKAN"] },
   { key: "COMPLETED", cocok: ["COMPLETED"] },
+
 ];
 
 const STATUS_BERHENTI = ["REJECTED", "CANCELLED"];
@@ -23,8 +25,10 @@ export default function StatusDetail() {
   const [p, setP] = useState(null);
 
   useEffect(() => {
+
     const found = getPengajuan().find((x) => String(x.id) === String(id));
     setP(found || false);
+
   }, [id]);
 
   if (p === null) {
@@ -202,4 +206,3 @@ export default function StatusDetail() {
     </div>
   );
 }
-
