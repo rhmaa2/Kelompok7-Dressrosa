@@ -11,18 +11,23 @@ export default function UserPage() {
   }, []);
 
   function setujui(id) {
+
     setujuiPetugas(id);
     setUsers(getUsers());
+
   }
 
   function tolak(id) {
+
     tolakPetugas(id);
     setUsers(getUsers());
+
   }
 
   const pending = users.filter((u) => u.statusPetugas === "pending");
 
   return (
+    
     <div>
       <h1 className="text-3xl font-black">Manajemen User</h1>
       <p className="mt-1 text-sm text-slate-500">

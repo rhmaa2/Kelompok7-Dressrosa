@@ -6,6 +6,7 @@ import { getCurrentUser, getPengajuan, seedStore } from "@/lib/store";
 import { formatRupiah, formatTanggal, statusClass, statusLabel } from "@/lib/utils";
 
 export default function StatusPage() {
+
   const [list, setList] = useState([]);
 
   useEffect(() => {
@@ -17,8 +18,6 @@ export default function StatusPage() {
         .filter((p) => !["COMPLETED", "CANCELLED", "REJECTED"].includes(p.status))
     );
   }, []);
-  
-
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <Link href="/barang" className="text-sm text-slate-500 hover:text-slate-700">
@@ -29,7 +28,6 @@ export default function StatusPage() {
       <p className="mt-1 text-sm text-slate-500">
         Pantau pengajuan yang masih berjalan.
       </p>
-
       <div className="mt-6 space-y-4">
         {!list.length ? (
           <div className="rounded-xl border border-dashed p-10 text-center text-slate-400">
