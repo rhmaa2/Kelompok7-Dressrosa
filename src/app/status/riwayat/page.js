@@ -9,12 +9,15 @@ export default function RiwayatPage() {
   const [list, setList] = useState([]);
   
   useEffect(() => {
+
     const u = getCurrentUser();
     setList(
       getPengajuan()
         .filter((p) => (u ? p.userId === u.id : true))
         .filter((p) => ["COMPLETED", "CANCELLED", "REJECTED"].includes(p.status))
+
     );
+    
   }, []);
 
   return (
@@ -72,6 +75,7 @@ export default function RiwayatPage() {
             Belum ada riwayat.
           </p>
         )}
+
       </div>
     </div>
   );
