@@ -34,15 +34,15 @@ export default function JadiPetugasPage() {
   });
 
   useEffect(() => {
-    setUser(getCurrentUser());
+    setUser(getCurrentUser() || null);
   }, []);
 
-  function handleChange(e) {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
-  }
+  };
 
-  function ajukan(e) {
+  const handleAjukan = (e) => {
     e.preventDefault();
     if (!user) return;
 
@@ -56,7 +56,7 @@ export default function JadiPetugasPage() {
     const updated = ajukanJadiPetugas(user.id, form);
     setUser(updated);
     setLoading(false);
-  }
+  };
 
   if (user === null) {
     return <p className="p-12 text-center text-slate-400">Memuat...</p>;
@@ -91,9 +91,10 @@ export default function JadiPetugasPage() {
     );
   }
 
-  const status = user.statusPetugas && user.statusPetugas !== "none"
-    ? PESAN_STATUS[user.statusPetugas]
-    : null;
+  const statusObj =
+    user.statusPetugas && user.statusPetugas !== "none"
+      ? PESAN_STATUS[user.statusPetugas]
+      : null;
 
   return (
     <div className="mx-auto max-w-lg px-4 py-12">
@@ -109,55 +110,24 @@ export default function JadiPetugasPage() {
       </p>
 
       <div className="mt-6 rounded-2xl border bg-white p-6 shadow-sm">
-        {status ? (
-          <div className={`rounded-xl border p-4 text-sm ${status.kelas}`}>
-            <p className="font-semibold">{status.judul}</p>
-            <p className="mt-1">{status.teks}</p>
+        {statusObj ? (
+          <div className={`rounded-xl border p-4 text-sm ${statusObj.kelas}`}>
+            <p className="font-semibold">{statusObj.judul}</p>
+            <p className="mt-1">{statusObj.teks}</p>
           </div>
         ) : (
-          <form onSubmit={ajukan} className="space-y-3">
-            <p className="text-sm text-slate-600">
-              Isi form di bawah untuk mengirim permintaan menjadi petugas ke
-              admin.
-            </p>
-
-            <Field
-              name="alasan"
-              label="Alasan ingin jadi petugas"
-              value={form.alasan}
-              onChange={handleChange}
-              textarea
-            />
-
-            <Field
-              name="pengalaman"
-              label="Pengalaman terkait (opsional)"
-              value={form.pengalaman}
-              onChange={handleChange}
-              textarea
-              required={false}
-            />
-
-            <Field
-              name="noHpPetugas"
-              label="Nomor HP aktif"
-              value={form.noHpPetugas}
-              onChange={handleChange}
-            />
-
-            {error && (
-              <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
-                {error}
-              </p>
-            )}
-
-            <Button disabled={loading} className="w-full">
-              {loading ? "Mengirim..." : "Ajukan Diri Jadi Petugas"}
-            </Button>
-          </form>
+          <FormPengajuan
+            onSubmit={handleAjukan}
+            form={form}
+            onChange={handleChange}
+            error={error}
+            loading={loading}
+            submitLabel="Ajukan Diri Jadi Petugas"
+            showIntro={true}
+          />
         )}
 
-        {status && user.statusPetugas === "approved" && (
+        {statusObj && user.statusPetugas === "approved" && (
           <Link
             href="/petugas/dashboard"
             className="mt-4 block rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-blue-800"
@@ -166,49 +136,86 @@ export default function JadiPetugasPage() {
           </Link>
         )}
 
-        {status && user.statusPetugas === "rejected" && (
-          <form onSubmit={ajukan} className="mt-4 space-y-3">
-            <Field
-              name="alasan"
-              label="Alasan ingin jadi petugas"
-              value={form.alasan}
+        {statusObj && user.statusPetugas === "rejected" && (
+          <div className="mt-4">
+            <FormPengajuan
+              onSubmit={handleAjukan}
+              form={form}
               onChange={handleChange}
-              textarea
+              error={error}
+              loading={loading}
+              submitLabel="Ajukan Lagi"
+              showIntro={false}
             />
-
-            <Field
-              name="pengalaman"
-              label="Pengalaman terkait (opsional)"
-              value={form.pengalaman}
-              onChange={handleChange}
-              textarea
-              required={false}
-            />
-
-            <Field
-              name="noHpPetugas"
-              label="Nomor HP aktif"
-              value={form.noHpPetugas}
-              onChange={handleChange}
-            />
-
-            {error && (
-              <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
-                {error}
-              </p>
-            )}
-
-            <Button disabled={loading} className="w-full">
-              {loading ? "Mengirim..." : "Ajukan Lagi"}
-            </Button>
-          </form>
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-function Field({ name, label, value, onChange, textarea = false, required = true }) {
+function FormPengajuan({
+  onSubmit,
+  form,
+  onChange,
+  error,
+  loading,
+  submitLabel,
+  showIntro = false,
+}) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-3">
+      {showIntro && (
+        <p className="text-sm text-slate-600">
+          Isi form di bawah untuk mengirim permintaan menjadi petugas ke admin.
+        </p>
+      )}
+
+      <Field
+        name="alasan"
+        label="Alasan ingin jadi petugas"
+        value={form.alasan}
+        onChange={onChange}
+        textarea
+      />
+
+      <Field
+        name="pengalaman"
+        label="Pengalaman terkait (opsional)"
+        value={form.pengalaman}
+        onChange={onChange}
+        textarea
+        required={false}
+      />
+
+      <Field
+        name="noHpPetugas"
+        label="Nomor HP aktif"
+        value={form.noHpPetugas}
+        onChange={onChange}
+      />
+
+      {error && (
+        <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+          {error}
+        </p>
+      )}
+
+      <Button disabled={loading} className="w-full">
+        {loading ? "Mengirim..." : submitLabel}
+      </Button>
+    </form>
+  );
+}
+
+function Field({
+  name,
+  label,
+  value,
+  onChange,
+  textarea = false,
+  required = true,
+}) {
   const inputClass =
     "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
 
