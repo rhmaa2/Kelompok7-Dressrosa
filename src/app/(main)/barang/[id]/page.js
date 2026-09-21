@@ -16,27 +16,42 @@ export default function DetailBarangPage() {
   const [added, setAdded] = useState(false);
 
   useEffect(() => {
-    setBarang(getBarang().find((x) => String(x.id) === String(id)) || false);
+    const dataList = getBarang() || [];
+    const found = dataList.find((x) => String(x.id) === String(id));
+    setBarang(found || false);
   }, [id]);
 
   if (barang === null) {
-    return <p className="p-12 text-center">Memuat...</p>;
+    return <p className="p-12 text-center text-slate-500">Memuat...</p>;
   }
 
   if (barang === false) {
     return (
-      <div className="p-12 text-center">
+      <div className="p-12 text-center text-slate-600">
         Barang tidak ditemukan.{" "}
-        <Link href="/barang" className="text-blue-600">
+        <Link href="/barang" className="font-medium text-blue-600 hover:underline">
           Kembali
         </Link>
       </div>
     );
   }
 
+  const handleIncrement = () => {
+    setQty((prev) => Math.min(barang.stok, prev + 1));
+  };
+
+  const handleDecrement = () => {
+    setQty((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleAddToCart = () => {
+    addToCart(barang, qty);
+    setAdded(true);
+  };
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <Link href="/barang" className="text-sm text-slate-500">
+      <Link href="/barang" className="text-sm text-slate-500 hover:text-slate-800">
         ← Katalog
       </Link>
 
@@ -53,38 +68,38 @@ export default function DetailBarangPage() {
           <p className="text-sm font-semibold text-blue-600">
             {barang.kategori}
           </p>
-          <h1 className="mt-1 text-3xl font-black">{barang.nama}</h1>
+          <h1 className="mt-1 text-3xl font-black text-slate-900">{barang.nama}</h1>
           <p className="mt-4 text-slate-600">{barang.deskripsi}</p>
 
-          <div className="my-6 space-y-2 text-sm">
+          <div className="my-6 space-y-2 text-sm text-slate-700">
             <p>
-              Harga: <b>{formatRupiah(barang.hargaSewa)}/hari</b>
+              Harga: <b className="text-slate-900">{formatRupiah(barang.hargaSewa)}/hari</b>
             </p>
             <p>
-              Jaminan: <b>{formatRupiah(barang.jaminan)}</b>
+              Jaminan: <b className="text-slate-900">{formatRupiah(barang.jaminan)}</b>
             </p>
             <p>
-              Stok: <b>{barang.stok}</b>
+              Stok: <b className="text-slate-900">{barang.stok}</b>
             </p>
           </div>
 
           {barang.stok > 0 ? (
             <>
               <div className="mb-4 flex items-center gap-3">
-                <span className="text-sm">Jumlah</span>
-                <div className="flex items-center rounded-lg border">
+                <span className="text-sm text-slate-700">Jumlah</span>
+                <div className="flex items-center rounded-lg border border-slate-300">
                   <button
-                    onClick={() => setQty((q) => Math.max(1, q - 1))}
-                    className="px-3 py-2"
+                    type="button"
+                    onClick={handleDecrement}
+                    className="px-3 py-2 text-slate-700 hover:bg-slate-100 rounded-l-lg transition"
                   >
                     −
                   </button>
-                  <span className="w-8 text-center">{qty}</span>
+                  <span className="w-8 text-center text-slate-900 font-medium">{qty}</span>
                   <button
-                    onClick={() =>
-                      setQty((q) => Math.min(barang.stok, q + 1))
-                    }
-                    className="px-3 py-2"
+                    type="button"
+                    onClick={handleIncrement}
+                    className="px-3 py-2 text-slate-700 hover:bg-slate-100 rounded-r-lg transition"
                   >
                     +
                   </button>
@@ -92,19 +107,18 @@ export default function DetailBarangPage() {
               </div>
 
               <Button
+                type="button"
                 className="w-full"
-                onClick={() => {
-                  addToCart(barang, qty);
-                  setAdded(true);
-                }}
+                onClick={handleAddToCart}
               >
                 {added ? "✓ Ditambahkan" : "Tambah ke Keranjang"}
               </Button>
 
               {added && (
                 <button
+                  type="button"
                   onClick={() => router.push("/keranjang")}
-                  className="mt-3 w-full text-sm text-blue-600"
+                  className="mt-3 w-full text-center text-sm font-medium text-blue-600 hover:underline"
                 >
                   Lihat keranjang →
                 </button>
