@@ -50,7 +50,7 @@ export default function Dashboard() {
       <div className="mt-6 rounded-xl border bg-white p-5">
         <h2 className="font-bold">Alur sistem</h2>
         <p className="mt-2 text-sm text-slate-500">
-          PENDING → APPROVED → DIPROSES → SIAP → SEDANG DISEWA → DIKEMBALIKAN → COMPLETED
+          PENDING → APPROVED → DIPROSES → SIAP → SEDANG DISEWA → DIKEMBALIKAN → PEMERIKSAAN → COMPLETED
         </p>
       </div>
     </div>

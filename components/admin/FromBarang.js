@@ -34,7 +34,6 @@ export default function FormBarang({ initial, onSubmit, onCancel }) {
       stok: Number(f.stok),
     });
 
-    // reset form kalau ini mode tambah baru (tidak ada initial)
     if (!initial) {
       setF(defaultForm);
     }

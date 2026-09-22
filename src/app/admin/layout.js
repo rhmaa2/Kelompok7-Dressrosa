@@ -19,8 +19,7 @@ export default function AdminLayout({ children }) {
     setUser(current);
   }, [router]);
 
-  // Selama pengecekan (atau saat sedang redirect karena tidak berhak),
-  // jangan render konten admin sama sekali.
+
   if (!user) return null;
 
   return (

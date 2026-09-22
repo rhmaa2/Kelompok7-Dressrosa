@@ -44,7 +44,7 @@ export default function ListBarang({ items }) {
                 href={`/barang/${b.id}`}
                 className="mt-3 block rounded-lg bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-blue-700"
               >
-                Lihat Detail
+                Lihat Detail Barang
               </Link>
             </div>
           </div>
