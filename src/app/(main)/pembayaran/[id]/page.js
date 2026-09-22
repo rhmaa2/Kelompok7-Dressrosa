@@ -7,56 +7,69 @@ import { getPengajuan, savePengajuan } from "@/lib/store";
 import { formatRupiah } from "@/lib/utils";
 import Button from "@/components/ui/Button";
 
-const KATEGORI = [
+interface PengajuanData {
+  id: string | number;
+  sudahBayar: boolean;
+  status: string;
+  totalSewa: number;
+  totalJaminan: number;
+  totalBayar: number;
+  [key: string]: any;
+}
+
+const PAYMENT_CATEGORIES = [
   { key: "va", label: "Transfer Bank" },
   { key: "ewallet", label: "E-Wallet" },
   { key: "qris", label: "QRIS" },
   { key: "kartu", label: "Kartu Kredit/Debit" },
 ];
 
-const BANK_LIST = [
-  { kode: "bca", nama: "BCA", prefix: "39" },
-  { kode: "mandiri", nama: "Mandiri", prefix: "889" },
-  { kode: "bni", nama: "BNI", prefix: "8808" },
-  { kode: "bri", nama: "BRI", prefix: "26215" },
+const BANK_OPTIONS = [
+  { code: "bca", name: "BCA", prefix: "39" },
+  { code: "mandiri", name: "Mandiri", prefix: "889" },
+  { code: "bni", name: "BNI", prefix: "8808" },
+  { code: "bri", name: "BRI", prefix: "26215" },
 ];
 
-const EWALLET_LIST = [
-  { kode: "gopay", nama: "GoPay" },
-  { kode: "ovo", nama: "OVO" },
-  { kode: "dana", nama: "DANA" },
-  { kode: "shopeepay", nama: "ShopeePay" },
+const EWALLET_OPTIONS = [
+  { code: "gopay", name: "GoPay" },
+  { code: "ovo", name: "OVO" },
+  { code: "dana", name: "DANA" },
+  { code: "shopeepay", name: "ShopeePay" },
 ];
 
-function buatNomorVA(kodeBank, id) {
-  const bank = BANK_LIST.find((b) => b.kode === kodeBank) || BANK_LIST[0];
-  const ekor = String(id).slice(-10).padStart(10, "0");
-  return `${bank.prefix}${ekor}`;
+function generateVirtualAccountNumber(bankCode: string, submissionId: string | number): string {
+  const selectedBank = BANK_OPTIONS.find((b) => b.code === bankCode) || BANK_OPTIONS[0];
+  const suffix = String(submissionId).slice(-10).padStart(10, "0");
+  return `${selectedBank.prefix}${suffix}`;
 }
 
 export default function PembayaranPage() {
   const { id } = useParams();
   const router = useRouter();
 
-  const [p, setP] = useState(null);
-  const [kategori, setKategori] = useState("va");
-  const [bank, setBank] = useState(BANK_LIST[0].kode);
-  const [ewallet, setEwallet] = useState(EWALLET_LIST[0].kode);
-  const [copied, setCopied] = useState(false);
-  const [proses, setProses] = useState(false);
+  const [submission, setSubmission] = useState<PengajuanData | null | false>(null);
+  const [selectedCategory, setSelectedCategory] = useState("va");
+  const [selectedBankCode, setSelectedBankCode] = useState(BANK_OPTIONS[0].code);
+  const [selectedEwalletCode, setSelectedEwalletCode] = useState(EWALLET_OPTIONS[0].code);
+  const [isCopied, setIsCopied] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    const found = getPengajuan().find((x) => String(x.id) === String(id));
-    setP(found || false);
+    const foundSubmission = getPengajuan().find((item) => String(item.id) === String(id));
+    setSubmission(foundSubmission || false);
   }, [id]);
 
-  const nomorVA = useMemo(() => (p ? buatNomorVA(bank, p.id) : ""), [bank, p]);
+  const virtualAccountNumber = useMemo(
+    () => (submission ? generateVirtualAccountNumber(selectedBankCode, submission.id) : ""),
+    [selectedBankCode, submission]
+  );
 
-  if (p === null) {
+  if (submission === null) {
     return <p className="p-12 text-center text-slate-400">Memuat...</p>;
   }
 
-  if (p === false) {
+  if (submission === false) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <p className="text-slate-500">Pengajuan tidak ditemukan.</p>
@@ -67,17 +80,17 @@ export default function PembayaranPage() {
     );
   }
 
-  if (p.sudahBayar) {
+  if (submission.sudahBayar) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <div className="rounded-2xl border bg-white p-8 shadow-sm">
           <p className="text-3xl">✅</p>
           <h1 className="mt-3 text-xl font-black">Pembayaran sudah diterima</h1>
           <p className="mt-2 text-sm text-slate-500">
-            Pengajuan #{p.id} sudah lunas dan sedang diproses.
+            Pengajuan #{submission.id} sudah lunas dan sedang diproses.
           </p>
           <Link
-            href={`/status/${p.id}`}
+            href={`/status/${submission.id}`}
             className="mt-5 inline-block rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white"
           >
             Lihat status pengajuan
@@ -87,7 +100,7 @@ export default function PembayaranPage() {
     );
   }
 
-  if (p.status !== "APPROVED") {
+  if (submission.status !== "APPROVED") {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <div className="rounded-2xl border bg-white p-8 shadow-sm">
@@ -96,7 +109,7 @@ export default function PembayaranPage() {
             Pengajuan ini masih menunggu persetujuan admin. Pembayaran baru bisa
             dilakukan setelah pengajuan disetujui.
           </p>
-          <Link href={`/status/${p.id}`} className="mt-5 inline-block font-semibold text-blue-600">
+          <Link href={`/status/${submission.id}`} className="mt-5 inline-block font-semibold text-blue-600">
             ← Kembali ke detail pengajuan
           </Link>
         </div>
@@ -104,94 +117,94 @@ export default function PembayaranPage() {
     );
   }
 
-  function salinVA() {
-    if (navigator.clipboard) navigator.clipboard.writeText(nomorVA);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+  function handleCopyVA() {
+    if (navigator.clipboard) navigator.clipboard.writeText(virtualAccountNumber);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 1500);
   }
 
-  function konfirmasiBayar() {
-    setProses(true);
+  function handleConfirmPayment() {
+    setIsProcessing(true);
     const list = getPengajuan();
-    const next = list.map((x) =>
-      x.id === p.id
-        ? { ...x, sudahBayar: true, status: x.status === "APPROVED" ? "DIPROSES" : x.status }
-        : x
+    const updatedList = list.map((item) =>
+      item.id === submission.id
+        ? { ...item, sudahBayar: true, status: item.status === "APPROVED" ? "DIPROSES" : item.status }
+        : item
     );
-    savePengajuan(next);
-    setTimeout(() => router.push(`/status/${p.id}`), 500);
+    savePengajuan(updatedList);
+    setTimeout(() => router.push(`/status/${submission.id}`), 500);
   }
 
-  const namaBank = BANK_LIST.find((b) => b.kode === bank)?.nama;
-  const namaEwallet = EWALLET_LIST.find((w) => w.kode === ewallet)?.nama;
+  const selectedBankName = BANK_OPTIONS.find((b) => b.code === selectedBankCode)?.name;
+  const selectedEwalletName = EWALLET_OPTIONS.find((w) => w.code === selectedEwalletCode)?.name;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <Link href={`/status/${p.id}`} className="text-sm text-slate-500 hover:text-slate-700">
+      <Link href={`/status/${submission.id}`} className="text-sm text-slate-500 hover:text-slate-700">
         ← Detail pengajuan
       </Link>
 
       <h1 className="mt-4 text-2xl font-black">Selesaikan Pembayaran</h1>
       <p className="mt-1 text-sm text-slate-500">
-        Pengajuan #{p.id} — pilih salah satu metode pembayaran di bawah ini.
+        Pengajuan #{submission.id} — pilih salah satu metode pembayaran di bawah ini.
       </p>
 
       <div className="mt-6 grid gap-6 md:grid-cols-[1fr_280px]">
         <div className="space-y-4">
           {/* Tab kategori metode */}
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {KATEGORI.map((k) => (
+            {PAYMENT_CATEGORIES.map((category) => (
               <button
-                key={k.key}
-                onClick={() => setKategori(k.key)}
+                key={category.key}
+                onClick={() => setSelectedCategory(category.key)}
                 className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${
-                  kategori === k.key
+                  selectedCategory === category.key
                     ? "border-blue-600 bg-blue-50 text-blue-700"
                     : "border-slate-200 text-slate-600 hover:border-slate-300"
                 }`}
               >
-                {k.label}
+                {category.label}
               </button>
             ))}
           </div>
 
           <div className="rounded-xl border bg-white p-5">
-            {kategori === "va" && (
+            {selectedCategory === "va" && (
               <div>
                 <p className="text-sm font-semibold">Pilih bank</p>
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {BANK_LIST.map((b) => (
+                  {BANK_OPTIONS.map((bank) => (
                     <button
-                      key={b.kode}
-                      onClick={() => setBank(b.kode)}
+                      key={bank.code}
+                      onClick={() => setSelectedBankCode(bank.code)}
                       className={`rounded-lg border px-3 py-2 text-xs font-medium ${
-                        bank === b.kode
+                        selectedBankCode === bank.code
                           ? "border-blue-600 text-blue-700"
                           : "border-slate-200 text-slate-600 hover:border-slate-300"
                       }`}
                     >
-                      {b.nama}
+                      {bank.name}
                     </button>
                   ))}
                 </div>
 
                 <div className="mt-4 rounded-lg bg-slate-50 p-4">
                   <p className="text-xs text-slate-500">
-                    Nomor Virtual Account {namaBank}
+                    Nomor Virtual Account {selectedBankName}
                   </p>
                   <div className="mt-1 flex items-center justify-between">
-                    <p className="text-lg font-black tracking-wider">{nomorVA}</p>
+                    <p className="text-lg font-black tracking-wider">{virtualAccountNumber}</p>
                     <button
-                      onClick={salinVA}
+                      onClick={handleCopyVA}
                       className="text-xs font-semibold text-blue-600 hover:text-blue-700"
                     >
-                      {copied ? "Tersalin!" : "Salin"}
+                      {isCopied ? "Tersalin!" : "Salin"}
                     </button>
                   </div>
                 </div>
 
                 <ol className="mt-4 list-decimal space-y-1 pl-4 text-xs text-slate-500">
-                  <li>Buka aplikasi m-banking atau kunjungi ATM {namaBank}.</li>
+                  <li>Buka aplikasi m-banking atau kunjungi ATM {selectedBankName}.</li>
                   <li>Pilih menu Transfer → Virtual Account.</li>
                   <li>Masukkan nomor Virtual Account di atas.</li>
                   <li>Periksa nominal tagihan, lalu selesaikan pembayaran.</li>
@@ -199,21 +212,21 @@ export default function PembayaranPage() {
               </div>
             )}
 
-            {kategori === "ewallet" && (
+            {selectedCategory === "ewallet" && (
               <div>
                 <p className="text-sm font-semibold">Pilih e-wallet</p>
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {EWALLET_LIST.map((w) => (
+                  {EWALLET_OPTIONS.map((ewallet) => (
                     <button
-                      key={w.kode}
-                      onClick={() => setEwallet(w.kode)}
+                      key={ewallet.code}
+                      onClick={() => setSelectedEwalletCode(ewallet.code)}
                       className={`rounded-lg border px-3 py-2 text-xs font-medium ${
-                        ewallet === w.kode
+                        selectedEwalletCode === ewallet.code
                           ? "border-blue-600 text-blue-700"
                           : "border-slate-200 text-slate-600 hover:border-slate-300"
                       }`}
                     >
-                      {w.nama}
+                      {ewallet.name}
                     </button>
                   ))}
                 </div>
@@ -223,17 +236,17 @@ export default function PembayaranPage() {
                     📱
                   </div>
                   <p className="mt-3 text-xs text-slate-500">
-                    Scan kode di atas lewat aplikasi {namaEwallet}, atau buka
+                    Scan kode di atas lewat aplikasi {selectedEwalletName}, atau buka
                     langsung aplikasinya untuk menyelesaikan pembayaran.
                   </p>
                   <button className="mt-3 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800">
-                    Buka Aplikasi {namaEwallet}
+                    Buka Aplikasi {selectedEwalletName}
                   </button>
                 </div>
               </div>
             )}
 
-            {kategori === "qris" && (
+            {selectedCategory === "qris" && (
               <div className="flex flex-col items-center text-center">
                 <div className="flex h-40 w-40 items-center justify-center rounded-xl border-2 border-dashed border-slate-300 text-5xl">
                   ▦
@@ -245,7 +258,7 @@ export default function PembayaranPage() {
               </div>
             )}
 
-            {kategori === "kartu" && (
+            {selectedCategory === "kartu" && (
               <div className="space-y-3">
                 <label className="block text-xs font-medium text-slate-600">
                   Nomor kartu
@@ -297,21 +310,21 @@ export default function PembayaranPage() {
             <div className="mt-2 space-y-1 text-sm">
               <div className="flex justify-between">
                 <span>Total sewa</span>
-                <span>{formatRupiah(p.totalSewa)}</span>
+                <span>{formatRupiah(submission.totalSewa)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Jaminan</span>
-                <span>{formatRupiah(p.totalJaminan)}</span>
+                <span>{formatRupiah(submission.totalJaminan)}</span>
               </div>
               <div className="mt-2 flex justify-between border-t pt-2 text-base font-bold">
                 <span>Total bayar</span>
-                <span className="text-blue-600">{formatRupiah(p.totalBayar)}</span>
+                <span className="text-blue-600">{formatRupiah(submission.totalBayar)}</span>
               </div>
             </div>
           </div>
 
-          <Button onClick={konfirmasiBayar} disabled={proses} className="w-full">
-            {proses ? "Memproses..." : "Saya Sudah Membayar"}
+          <Button onClick={handleConfirmPayment} disabled={isProcessing} className="w-full">
+            {isProcessing ? "Memproses..." : "Saya Sudah Membayar"}
           </Button>
           <p className="text-center text-[11px] text-slate-400">
             Status pembayaran akan diverifikasi oleh admin setelah dikonfirmasi.
