@@ -3,17 +3,17 @@
 import { useEffect, useState } from "react";
 import Tombol from "@/components/ui/Tombol";
 
-export default function FormBarang({ initial, onSubmit, onCancel }) {
-  const defaultForm = {
-    nama: "",
-    kategori: "",
-    deskripsi: "",
-    hargaSewa: 0,
-    jaminan: 0,
-    stok: 0,
-    gambar: "📦",
-  };
+const defaultForm = {
+  nama: "",
+  kategori: "",
+  deskripsi: "",
+  hargaSewa: 0,
+  jaminan: 0,
+  stok: 0,
+  gambar: "📦",
+};
 
+export default function FormBarang({ initial, onSubmit, onCancel }) {
   const [f, setF] = useState(initial || defaultForm);
 
   useEffect(() => {
@@ -26,10 +26,18 @@ export default function FormBarang({ initial, onSubmit, onCancel }) {
     e.preventDefault();
     onSubmit({
       ...f,
+      nama: f.nama.trim(),
+      kategori: f.kategori.trim(),
+      deskripsi: f.deskripsi.trim(),
       hargaSewa: Number(f.hargaSewa),
       jaminan: Number(f.jaminan),
       stok: Number(f.stok),
     });
+
+    // reset form kalau ini mode tambah baru (tidak ada initial)
+    if (!initial) {
+      setF(defaultForm);
+    }
   };
 
   return (
@@ -55,6 +63,7 @@ export default function FormBarang({ initial, onSubmit, onCancel }) {
       <input
         name="hargaSewa"
         type="number"
+        min="0"
         value={f.hargaSewa}
         onChange={c}
         placeholder="Harga sewa/hari"
@@ -64,6 +73,7 @@ export default function FormBarang({ initial, onSubmit, onCancel }) {
       <input
         name="jaminan"
         type="number"
+        min="0"
         value={f.jaminan}
         onChange={c}
         placeholder="Jaminan"
@@ -73,6 +83,7 @@ export default function FormBarang({ initial, onSubmit, onCancel }) {
       <input
         name="stok"
         type="number"
+        min="0"
         value={f.stok}
         onChange={c}
         placeholder="Stok"
