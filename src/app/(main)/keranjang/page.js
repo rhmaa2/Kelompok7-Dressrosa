@@ -7,21 +7,36 @@ import KeranjangItem from "@/components/peminjaman/KeranjangItem";
 import { formatRupiah } from "@/lib/utils";
 import Button from "@/components/ui/Button";
 
+interface CartItem {
+  barangId: string | number;
+  namaBarang: string;
+  hargaSewa: number;
+  jaminan: number;
+  qty: number;
+  [key: string]: any;
+}
+
 export default function KeranjangPage() {
-  const [cart, setCart] = useState([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
-    setCart(getCart());
+    setCartItems(getCart());
   }, []);
 
-  const sewa = cart.reduce((s, x) => s + x.hargaSewa * x.qty, 0);
-  const jaminan = cart.reduce((s, x) => s + x.jaminan * x.qty, 0);
+  const totalRentalPricePerDay = cartItems.reduce(
+    (sum, item) => sum + item.hargaSewa * item.qty,
+    0
+  );
+  const totalDeposit = cartItems.reduce(
+    (sum, item) => sum + item.jaminan * item.qty,
+    0
+  );
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <h1 className="text-3xl font-black">Keranjang Sewa</h1>
 
-      {!cart.length ? (
+      {cartItems.length === 0 ? (
         <div className="mt-6 rounded-xl border border-dashed p-12 text-center text-slate-500">
           Keranjang masih kosong.
           <br />
@@ -35,12 +50,16 @@ export default function KeranjangPage() {
       ) : (
         <div className="mt-6 grid gap-6 md:grid-cols-[1fr_320px]">
           <div className="rounded-xl border bg-white px-5">
-            {cart.map((x) => (
+            {cartItems.map((item) => (
               <KeranjangItem
-                key={x.barangId}
-                item={x}
-                onQty={(q) => setCart(updateQty(x.barangId, q))}
-                onRemove={() => setCart(removeFromCart(x.barangId))}
+                key={item.barangId}
+                item={item}
+                onQty={(newQty) =>
+                  setCartItems(updateQty(item.barangId, newQty))
+                }
+                onRemove={() =>
+                  setCartItems(removeFromCart(item.barangId))
+                }
               />
             ))}
           </div>
@@ -50,11 +69,11 @@ export default function KeranjangPage() {
             <div className="mt-4 space-y-2 text-sm">
               <p className="flex justify-between">
                 <span>Total sewa/hari</span>
-                <b>{formatRupiah(sewa)}</b>
+                <b>{formatRupiah(totalRentalPricePerDay)}</b>
               </p>
               <p className="flex justify-between">
                 <span>Total jaminan</span>
-                <b>{formatRupiah(jaminan)}</b>
+                <b>{formatRupiah(totalDeposit)}</b>
               </p>
             </div>
             <Link href="/checkout" className="mt-5 block">
