@@ -63,7 +63,6 @@ EVENTRA adalah sistem untuk mengelola proses peminjaman perlengkapan pesta dan a
 * Upload bukti pembayaran (DP/lunas)
 * Pemantauan status peminjaman (timeline `PENDING → ... → COMPLETED`)
 * Riwayat peminjaman yang sudah selesai/dibatalkan/ditolak
-* Beri ulasan & rating barang setelah selesai sewa
 
 ### ADMIN
 
