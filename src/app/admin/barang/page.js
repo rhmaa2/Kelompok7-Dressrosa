@@ -49,7 +49,7 @@ export default function AdminBarangPage() {
       setItems(b);
       setKategoriList(k);
     } catch (err) {
-      setError(err.message || "Gagal memuat data barang dari API.");
+      setError(err.message || "Gagal memuat data barang dari API");
     } finally {
       setLoading(false);
     }
