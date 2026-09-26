@@ -108,12 +108,34 @@ export async function apiLogin({ email, password }) {
   const data = await request("/login", { method: "POST", body: { email, password }, auth: false });
   if (data?.token) setToken(data.token);
 
+  // v2 & v3 bisa beda bentuk. Coba beberapa kemungkinan lokasi objek user.
+  const rawUser =
+    data?.user ??
+    data?.data?.user ??
+    data?.data ??
+    (data?.id || data?.email ? data : null); // kalau user-nya taruh langsung di root
+
+  // Coba beberapa kemungkinan nama field role.
+  const rawRole =
+    rawUser?.role ??
+    rawUser?.tipe_user ??
+    rawUser?.role_name ??
+    (Array.isArray(rawUser?.roles) ? rawUser.roles[0] : undefined);
+
+  if (!rawUser || rawRole === undefined) {
+    console.error("Bentuk response login tidak dikenali:", JSON.stringify(data, null, 2));
+    throw new Error(
+      "Login berhasil tapi data user/role tidak ditemukan di response API. Cek console untuk bentuk response aslinya."
+    );
+  }
+
   const user = {
-    id: data?.user?.id,
-    nama: data?.user?.name || data?.user?.nama,
-    email: data?.user?.email,
-    role: data?.user?.role === "penyewa" ? "user" : data?.user?.role || "user",
+    id: rawUser.id,
+    nama: rawUser.name || rawUser.nama,
+    email: rawUser.email,
+    role: rawRole === "penyewa" ? "user" : rawRole,
   };
+
   setCurrentUser(user);
   return { ...data, user };
 }
@@ -126,7 +148,7 @@ export async function apiGetKey() {
   return request("/key", { method: "GET" });
 }
 
-
+// ---------- Resources ----------
 export const Users = crud("users");
 export const KategoriBarang = crud("kategori_barang");
 export const Barang = crud("barang");
@@ -138,7 +160,7 @@ export const PengecekanBarang = crud("pengecekan_barang");
 export const PengajuanPetugas = crud("pengajuan_petugas");
 export const RiwayatStatus = crud("riwayat_status");
 
-
+// ---------- Status enum ----------
 export const STATUS_PEMINJAMAN = {
   MENUNGGU_PERSETUJUAN: "menunggu_persetujuan",
   DISETUJUI: "disetujui",
