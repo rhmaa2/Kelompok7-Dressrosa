@@ -99,7 +99,6 @@ function crud(resource) {
   };
 }
 
-// ---------- Auth ----------
 export async function apiRegister({ nama, email, password }) {
   return request("/register", { method: "POST", body: { nama, email, password }, auth: false });
 }
