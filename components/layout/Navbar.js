@@ -28,7 +28,7 @@ export default function Navbar() {
 
   function keluar() {
     logout();
-    location.href = "/login";
+    location.href = "/";
   }
 
   return (
@@ -42,6 +42,9 @@ export default function Navbar() {
 
           {user && (
             <>
+              <Link href="/barang" className="text-sm font-medium text-slate-600 hover:text-indigo-600">
+                Katalog
+              </Link>
               <Link href="/status" className="text-sm font-medium text-slate-600 hover:text-indigo-600">
                 Status
               </Link>
@@ -79,8 +82,7 @@ export default function Navbar() {
             <button
               onClick={keluar}
               className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
-            >
-              Keluar
+            > Keluar
             </button>
           ) : (
             <Link href="/login" className="btn-gradient rounded-lg px-3 py-2 text-sm font-semibold">

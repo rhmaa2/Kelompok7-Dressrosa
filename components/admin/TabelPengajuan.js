@@ -2,16 +2,17 @@ import {
   formatRupiah,
   formatTanggal,
   statusClass,
-  statusLabel,
+  labelStatusPeminjaman,
 } from "@/lib/utils";
+import { linkWA, pesanKeUser } from "@/lib/whatsapp";
 
-export default function TabelPengajuan({ items, onStatus }) {
+export default function TabelPengajuan({ items, onStatus, users = {} }) {
   return (
     <div className="overflow-x-auto rounded-xl border bg-white">
       <table className="w-full text-left text-sm">
         <thead className="bg-slate-50 text-xs uppercase text-slate-500">
           <tr>
-            <th className="p-3">ID/User</th>
+            <th className="p-3">ID</th>
             <th className="p-3">Tanggal</th>
             <th className="p-3">Total</th>
             <th className="p-3">Status</th>
@@ -25,7 +26,7 @@ export default function TabelPengajuan({ items, onStatus }) {
               <td className="p-3">
                 <b>#{p.id}</b>
                 <br />
-                <span className="text-xs text-slate-500">{p.userNama}</span>
+                <span className="text-xs text-slate-500">{users[p.userId]?.nama || `User ID ${p.userId}`}</span>
               </td>
 
               <td className="p-3">
@@ -38,32 +39,48 @@ export default function TabelPengajuan({ items, onStatus }) {
 
               <td className="p-3">
                 <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusClass(p.status)}`}>
-                  {statusLabel[p.status] || p.status}
+                  {labelStatusPeminjaman(p)}
                 </span>
               </td>
 
               <td className="p-3">
                 <div className="flex gap-2">
-                  {p.status === "PENDING" && (
+                  {p.status === "menunggu_persetujuan" && (
                     <>
-                      <button onClick={() => onStatus(p.id, "APPROVED")} className="text-xs font-semibold text-blue-600">
-                        Approve
+                      <button onClick={() => onStatus(p.id, "disetujui")} className="text-xs font-semibold text-blue-600">
+                        Setujui
                       </button>
-                      <button onClick={() => onStatus(p.id, "REJECTED")} className="text-xs font-semibold text-red-600">
-                        Reject
+                      <button onClick={() => onStatus(p.id, "ditolak")} className="text-xs font-semibold text-red-600">
+                        Tolak
                       </button>
                     </>
                   )}
-
-                  {p.status === "APPROVED" && !p.sudahBayar && (
-                    <button onClick={() => onStatus(p.id, "DIPROSES")} className="text-xs font-semibold text-blue-600">
-                      Verifikasi Bayar
-                    </button>
+                  {users[p.userId]?.noHp ? (
+                    <a
+                      href={linkWA(users[p.userId].noHp, pesanKeUser(p, users[p.userId].nama))}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-semibold text-green-600"
+                    >
+                      WhatsApp
+                    </a>
+                  ) : (
+                    p.status !== "menunggu_persetujuan" && (
+                      <span className="text-xs text-slate-400">-</span>
+                    )
                   )}
                 </div>
               </td>
             </tr>
           ))}
+
+          {!items.length && (
+            <tr>
+              <td colSpan={5} className="p-6 text-center text-sm text-slate-400">
+                Belum ada pengajuan.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

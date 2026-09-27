@@ -3,111 +3,113 @@
 import { useEffect, useState } from "react";
 import Tombol from "@/components/ui/Tombol";
 
-const defaultForm = {
-  nama: "",
-  kategori: "",
-  deskripsi: "",
-  hargaSewa: 0,
-  jaminan: 0,
-  stok: 0,
-  gambar: "📦",
-};
+const KONDISI_OPTIONS = ["baik", "rusak", "perbaikan"];
 
-export default function FormBarang({ initial, onSubmit, onCancel }) {
+const inputCls =
+  "w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100";
+
+function Field({ label, children, span2 }) {
+  return (
+    <label className={`block text-xs font-semibold text-slate-500 ${span2 ? "sm:col-span-2" : ""}`}>
+      {label}
+      <div className="mt-1">{children}</div>
+    </label>
+  );
+}
+
+export default function FormBarang({ initial, kategoriList, onSubmit, onCancel, submitting }) {
+  const defaultForm = {
+    nama: "",
+    kategoriId: kategoriList?.[0]?.id || "",
+    hargaSewa: 0,
+    hargaJaminan: 0,
+    stok: 0,
+    stokTersedia: 0,
+    kondisi: "baik",
+    foto: "",
+    deskripsi: "",
+  };
+
   const [f, setF] = useState(initial || defaultForm);
 
   useEffect(() => {
     setF(initial || defaultForm);
+    // memberitahu ESLint agar tidak memberikan peringatan pada baris dependency useEffect berikutnya
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
-
+  //...f spread operator, tujuannya menyalin semua data lama
   const c = (e) => setF({ ...f, [e.target.name]: e.target.value });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit({
       ...f,
-      nama: f.nama.trim(),
-      kategori: f.kategori.trim(),
-      deskripsi: f.deskripsi.trim(),
+      kategoriId: Number(f.kategoriId),
       hargaSewa: Number(f.hargaSewa),
-      jaminan: Number(f.jaminan),
+      hargaJaminan: Number(f.hargaJaminan || 0),
       stok: Number(f.stok),
+      stokTersedia: Number(f.stokTersedia || f.stok),
+      foto: f.foto?.trim() || "",
+      deskripsi: f.deskripsi || "",
     });
-
-    if (!initial) {
-      setF(defaultForm);
-    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-3 sm:grid-cols-2">
-      <input
-        required
-        name="nama"
-        value={f.nama}
-        onChange={c}
-        placeholder="Nama barang"
-        className="rounded-lg border px-3 py-2"
-      />
+    <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
+      <Field label="Nama barang" span2>
+        <input required name="nama" value={f.nama} onChange={c} placeholder="Contoh: Tenda 4x6" className={inputCls} />
+      </Field>
 
-      <input
-        required
-        name="kategori"
-        value={f.kategori}
-        onChange={c}
-        placeholder="Kategori"
-        className="rounded-lg border px-3 py-2"
-      />
+      <Field label="Kategori">
+        <select required name="kategoriId" value={f.kategoriId} onChange={c} className={inputCls}>
+          <option value="">Pilih kategori</option>
+          {(kategoriList || []).map((k) => (
+            <option key={k.id} value={k.id}>
+              {k.nama}
+            </option>
+          ))}
+        </select>
+      </Field>
 
-      <input
-        name="hargaSewa"
-        type="number"
-        min="0"
-        value={f.hargaSewa}
-        onChange={c}
-        placeholder="Harga sewa/hari"
-        className="rounded-lg border px-3 py-2"
-      />
+      <Field label="Kondisi">
+        <select name="kondisi" value={f.kondisi} onChange={c} className={inputCls}>
+          {KONDISI_OPTIONS.map((k) => (
+            <option key={k} value={k}>
+              {k}
+            </option>
+          ))}
+        </select>
+      </Field>
 
-      <input
-        name="jaminan"
-        type="number"
-        min="0"
-        value={f.jaminan}
-        onChange={c}
-        placeholder="Jaminan"
-        className="rounded-lg border px-3 py-2"
-      />
+      <Field label="Harga sewa / hari (Rp)">
+        <input name="hargaSewa" type="number" min="0" value={f.hargaSewa} onChange={c} placeholder="150000" className={inputCls} />
+      </Field>
 
-      <input
-        name="stok"
-        type="number"
-        min="0"
-        value={f.stok}
-        onChange={c}
-        placeholder="Stok"
-        className="rounded-lg border px-3 py-2"
-      />
+      <Field label="Harga jaminan (Rp)">
+        <input name="hargaJaminan" type="number" min="0" value={f.hargaJaminan} onChange={c} placeholder="0" className={inputCls} />
+      </Field>
 
-      <input
-        name="gambar"
-        value={f.gambar}
-        onChange={c}
-        placeholder="Emoji"
-        className="rounded-lg border px-3 py-2"
-      />
+      <Field label="Stok total">
+        <input name="stok" type="number" min="0" value={f.stok} onChange={c} placeholder="0" className={inputCls} />
+      </Field>
 
-      <textarea
-        name="deskripsi"
-        value={f.deskripsi}
-        onChange={c}
-        placeholder="Deskripsi"
-        className="sm:col-span-2 rounded-lg border px-3 py-2"
-      />
+      <Field label="Stok tersedia">
+        <input name="stokTersedia" type="number" min="0" value={f.stokTersedia} onChange={c} placeholder="0" className={inputCls} />
+      </Field>
 
-      <div className="sm:col-span-2 flex gap-2">
-        <Tombol type="submit">Simpan</Tombol>
-        <Tombol type="button" variant="secondary" onClick={onCancel}>
+      <Field label="URL foto (opsional)" span2>
+        <input name="foto" value={f.foto} onChange={c} placeholder="Kosongkan untuk gambar otomatis" className={inputCls} />
+      </Field>
+
+      <Field label="Deskripsi (opsional)" span2>
+        <textarea name="deskripsi" value={f.deskripsi} onChange={c} placeholder="Deskripsi singkat barang" rows={3} className={inputCls} />
+      </Field>
+
+      <div className="flex gap-2 sm:col-span-2">
+        <Tombol type="submit" disabled={submitting}>
+          {submitting ? "Menyimpan..." : "Simpan"}
+        </Tombol>
+        <Tombol type="button" variant="secondary" onClick={onCancel} disabled={submitting}>
           Batal
         </Tombol>
       </div>
