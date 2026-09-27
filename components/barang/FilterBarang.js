@@ -11,13 +11,13 @@ export default function FilterBarang({
         value={keyword}
         onChange={(e) => onKeywordChange(e.target.value)}
         placeholder="Cari nama barang..."
-        className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500"
+        className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
       />
 
       <select
         value={kategoriAktif}
         onChange={(e) => onKategoriChange(e.target.value)}
-        className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm"
+        className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
       >
         {kategoriList.map((k) => (
           <option key={k}>{k}</option>
