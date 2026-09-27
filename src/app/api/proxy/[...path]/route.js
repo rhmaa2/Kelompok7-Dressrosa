@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://hmif.if.unram.ac.id/api/v3";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://hmif.if.unram.ac.id/api/v2";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
 
+
+// PUT/DELETE ditolak browser
 async function forward(request, { params }) {
   const { path } = await params;
   const url = new URL(request.url);
