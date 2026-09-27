@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Card from "@/components/ui/Card";
 import Tombol from "@/components/ui/Tombol";
 import Modal from "@/components/ui/Modal";
 import FormBarang from "@/components/admin/FormBarang";
@@ -41,6 +40,7 @@ export default function AdminBarangPage() {
     muat();
   }, []);
 
+  //waktu mengambil data dari API
   async function muat() {
     setLoading(true);
     setError("");
@@ -49,7 +49,7 @@ export default function AdminBarangPage() {
       setItems(b);
       setKategoriList(k);
     } catch (err) {
-      setError(err.message || "Gagal memuat data barang dari API");
+      setError(err.message || "Gagal memuat data barang dari API.");
     } finally {
       setLoading(false);
     }
