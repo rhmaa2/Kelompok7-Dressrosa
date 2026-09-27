@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { clearCart } from "@/lib/cart";
-import { getCurrentUser, getPengajuan, savePengajuan } from "@/lib/store";
+import { getCurrentUser, buatPeminjaman } from "@/lib/store";
 import { daysBetween, formatRupiah } from "@/lib/utils";
 import Button from "@/components/ui/Button";
 
@@ -12,38 +12,37 @@ export default function FormCheckout({ cart }) {
   const user = getCurrentUser();
 
   const [form, setForm] = useState({
-    tanggalMulai: "",
-    tanggalSelesai: "",
-    metode: "ambil",
-    alamat: user?.alamat || "",
+    tanggal_mulai_sewa: "",
+    tanggal_selesai_sewa: "",
   });
-
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const hari = daysBetween(form.tanggalMulai, form.tanggalSelesai);
-  const totalSewa = cart.reduce((s, x) => s + x.hargaSewa * x.qty, 0) * hari;
-  const totalJaminan = cart.reduce((s, x) => s + x.jaminan * x.qty, 0);
-  const totalBayar = totalSewa + totalJaminan;
+  const hari = daysBetween(form.tanggal_mulai_sewa, form.tanggal_selesai_sewa);
+  const hargaItem = (x) => Number(x.hargaSewa ?? x.harga_sewa_per_hari ?? x.harga_sewa ?? 0);
+  const totalSewa = cart.reduce((s, x) => s + hargaItem(x) * Number(x.qty || 0), 0) * Math.max(hari, 0);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+<<<<<<< HEAD
   const handleSubmit = (e) => {
+=======
+  async function submit(e) {
+>>>>>>> b5af262921bebe0badafcfb6b31722e352043fdd
     e.preventDefault();
     setError("");
 
     if (!user) return setError("Silakan login terlebih dahulu.");
-    if (!form.tanggalMulai || !form.tanggalSelesai)
+    if (!form.tanggal_mulai_sewa || !form.tanggal_selesai_sewa)
       return setError("Tanggal mulai dan selesai wajib diisi.");
-    if (new Date(form.tanggalSelesai) < new Date(form.tanggalMulai))
+    if (new Date(form.tanggal_selesai_sewa) < new Date(form.tanggal_mulai_sewa))
       return setError("Tanggal selesai tidak boleh sebelum tanggal mulai.");
-    if (form.metode === "antar" && !form.alamat.trim())
-      return setError("Alamat pengantaran wajib diisi.");
 
     setSaving(true);
 
+<<<<<<< HEAD
     const list = getPengajuan() || [];
     const p = {
       id: Date.now(),
@@ -64,6 +63,25 @@ export default function FormCheckout({ cart }) {
     clearCart();
     router.push(`/status/${p.id}`);
   };
+=======
+    try {
+      const p = await buatPeminjaman({
+        userId: user.id,
+        userNama: user.nama,
+        tanggalMulai: form.tanggal_mulai_sewa,
+        tanggalSelesai: form.tanggal_selesai_sewa,
+        totalBayar: totalSewa,
+        items: cart,
+      });
+
+      clearCart();
+      router.push(`/status/${p.id}`);
+    } catch (err) {
+      setError(err.message || "Gagal mengirim pengajuan. Coba lagi.");
+      setSaving(false);
+    }
+  }
+>>>>>>> b5af262921bebe0badafcfb6b31722e352043fdd
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -75,24 +93,30 @@ export default function FormCheckout({ cart }) {
             <span>
               {x.nama} × {x.qty}
             </span>
-            <span>{formatRupiah(x.hargaSewa * x.qty)}</span>
+            <span>{formatRupiah(hargaItem(x) * Number(x.qty || 0))}</span>
           </div>
         ))}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
-          name="tanggalMulai"
-          label="Tanggal mulai"
+          name="tanggal_mulai_sewa"
+          label="tanggal_mulai_sewa"
           type="date"
+<<<<<<< HEAD
           value={form.tanggalMulai}
           onChange={handleChange}
+=======
+          value={form.tanggal_mulai_sewa}
+          onChange={change}
+>>>>>>> b5af262921bebe0badafcfb6b31722e352043fdd
         />
 
         <Field
-          name="tanggalSelesai"
-          label="Tanggal selesai"
+          name="tanggal_selesai_sewa"
+          label="tanggal_selesai_sewa"
           type="date"
+<<<<<<< HEAD
           value={form.tanggalSelesai}
           onChange={handleChange}
         />
@@ -121,11 +145,20 @@ export default function FormCheckout({ cart }) {
       )}
 
       <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-700">
+=======
+          value={form.tanggal_selesai_sewa}
+          onChange={change}
+        />
+      </div>
+
+      <div className="rounded-xl border p-4 text-sm">
+>>>>>>> b5af262921bebe0badafcfb6b31722e352043fdd
         <div className="flex justify-between">
           <span>Durasi</span>
           <b className="text-slate-900">{hari} hari</b>
         </div>
 
+<<<<<<< HEAD
         <div className="mt-2 flex justify-between">
           <span>Total sewa</span>
           <b className="text-slate-900">{formatRupiah(totalSewa)}</b>
@@ -140,6 +173,12 @@ export default function FormCheckout({ cart }) {
           <div className="flex justify-between">
             <span className="font-semibold text-slate-900">Total pengajuan</span>
             <b className="text-blue-600">{formatRupiah(totalBayar)}</b>
+=======
+        <div className="mt-3 border-t pt-3 text-base">
+          <div className="flex justify-between">
+            <span>Total pengajuan</span>
+            <b className="text-blue-600">{formatRupiah(totalSewa)}</b>
+>>>>>>> b5af262921bebe0badafcfb6b31722e352043fdd
           </div>
         </div>
       </div>

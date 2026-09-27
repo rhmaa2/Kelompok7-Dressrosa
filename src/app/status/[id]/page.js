@@ -3,32 +3,41 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { getPengajuan, savePengajuan } from "@/lib/store";
-import { formatRupiah, formatTanggal, statusLabel } from "@/lib/utils";
+import { getPeminjamanLengkap, ubahStatusPeminjaman, getCurrentUser } from "@/lib/store";
+import { WA_ADMIN, linkWA, pesanKeAdmin } from "@/lib/whatsapp";
+import { formatRupiah, formatTanggal, statusLabel, labelStatusPeminjaman } from "@/lib/utils";
 
 const ALUR = [
-
-  { key: "PENDING", cocok: ["PENDING"] },
-  { key: "APPROVED", cocok: ["APPROVED"] },
-  { key: "DIPROSES", cocok: ["DIPROSES"] },
-  { key: "SIAP", cocok: ["SIAP_DIAMBIL", "SIAP_DIKIRIM"] },
-  { key: "SEDANG_DI_SEWA", cocok: ["SEDANG_DI_SEWA"] },
-  { key: "DIKEMBALIKAN", cocok: ["DIKEMBALIKAN"] },
-  { key: "COMPLETED", cocok: ["COMPLETED"] },
-
+  { key: "menunggu_persetujuan" },
+  { key: "disetujui" },
+  { key: "menunggu_verifikasi", label: "Menunggu Verifikasi Pembayaran" },
+  { key: "siap_diambil" },
+  { key: "sedang_dipinjam" },
+  { key: "dikembalikan" },
+  { key: "diperiksa" },
+  { key: "selesai" },
 ];
 
-const STATUS_BERHENTI = ["REJECTED", "CANCELLED"];
+const STATUS_BERHENTI = ["ditolak", "dibatalkan"];
 
 export default function StatusDetail() {
   const { id } = useParams();
   const [p, setP] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [errBatal, setErrBatal] = useState("");
 
   useEffect(() => {
-
-    const found = getPengajuan().find((x) => String(x.id) === String(id));
-    setP(found || false);
-
+    let mounted = true;
+    getPeminjamanLengkap()
+      .then((data) => {
+        if (!mounted) return;
+        const found = data.find((x) => String(x.id) === String(id));
+        setP(found || false);
+      })
+      .catch(() => mounted && setP(false));
+    return () => {
+      mounted = false;
+    };
   }, [id]);
 
   if (p === null) {
@@ -43,27 +52,29 @@ export default function StatusDetail() {
   }
 
   const dihentikan = STATUS_BERHENTI.includes(p.status);
-  const langkahAktif = ALUR.findIndex((s) => s.cocok.includes(p.status));
+  const kunciAktif =
+    p.status === "terlambat"
+      ? "sedang_dipinjam"
+      : p.status === "disetujui" && p.sudahBayar
+      ? "menunggu_verifikasi"
+      : p.status;
+  const indexAlur = ALUR.findIndex((s) => s.key === kunciAktif);
+  // Status tidak dikenal -> anggap tahap pertama (Menunggu Persetujuan).
+  const langkahAktif = indexAlur < 0 ? 0 : indexAlur;
 
-  function labelUntuk(key) {
-    if (key === "SIAP") {
-      return p.metode === "antar" ? statusLabel.SIAP_DIKIRIM : statusLabel.SIAP_DIAMBIL;
+  async function batalkan() {
+    if (!window.confirm("Yakin ingin membatalkan pengajuan ini?")) return;
+    setBusy(true);
+    setErrBatal("");
+    try {
+      await ubahStatusPeminjaman(p.id, "dibatalkan");
+      setP({ ...p, status: "dibatalkan" });
+    } catch (err) {
+      setErrBatal(err.message || "Gagal membatalkan pengajuan.");
+    } finally {
+      setBusy(false);
     }
-    return statusLabel[key] || key;
   }
-
-  function updateStatus(patch) {
-    const next = getPengajuan().map((x) =>
-      x.id === p.id ? { ...x, ...patch } : x
-    );
-    savePengajuan(next);
-    setP({ ...p, ...patch });
-  }
-
-  function batalkan() {
-    updateStatus({ status: "CANCELLED" });
-  }
-
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -90,7 +101,7 @@ export default function StatusDetail() {
                   : "bg-blue-100 text-blue-700"
               }`}
             >
-              {statusLabel[p.status] || p.status}
+              {labelStatusPeminjaman(p)}
             </span>
           </div>
         </div>
@@ -103,12 +114,12 @@ export default function StatusDetail() {
             </p>
             <ul className="mt-2 space-y-1 text-sm text-slate-700">
               {p.items.map((i) => (
-                <li key={i.barangId || i.nama} className="flex justify-between">
+                <li key={i.barangId} className="flex justify-between">
                   <span>
                     {i.nama} × {i.qty}
                   </span>
                   <span className="text-slate-500">
-                    {formatRupiah(i.hargaSewa * i.qty)}
+                    {formatRupiah(i.subtotal)}
                   </span>
                 </li>
               ))}
@@ -118,7 +129,7 @@ export default function StatusDetail() {
           {/* Timeline */}
           {dihentikan ? (
             <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-              Pengajuan ini {p.status === "CANCELLED" ? "sudah dibatalkan" : "ditolak"}
+              Pengajuan ini {p.status === "dibatalkan" ? "sudah dibatalkan" : "ditolak"}
               {" "}dan tidak akan diproses lebih lanjut.
             </div>
           ) : (
@@ -128,42 +139,53 @@ export default function StatusDetail() {
               </p>
               <div className="relative pl-2">
                 {ALUR.map((step, i) => {
-                  const selesai = i <= langkahAktif;
+                  const selesai = i < langkahAktif;
+                  const aktif = i === langkahAktif;
+                  const terlewati = i <= langkahAktif;
                   const terakhir = i === ALUR.length - 1;
                   return (
                     <div key={step.key} className="relative flex gap-4 pb-7 last:pb-0">
                       {!terakhir && (
                         <span
                           className={`absolute left-[9px] top-5 h-full w-0.5 ${
-                            i < langkahAktif ? "bg-blue-500" : "bg-slate-200"
+                            selesai ? "bg-blue-500" : "bg-slate-200"
                           }`}
                         />
                       )}
                       <span
                         className={`z-10 mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${
-                          selesai ? "bg-blue-600" : "bg-slate-300"
-                        }`}
+                          terlewati ? "bg-blue-600" : "bg-slate-300"
+                        } ${aktif ? "ring-4 ring-blue-200 animate-pulse" : ""}`}
                       >
-                        {i < langkahAktif ? "✓" : ""}
+                        {selesai ? "✓" : aktif ? "●" : ""}
                       </span>
                       <div>
                         <p
                           className={`text-sm font-semibold ${
-                            selesai ? "text-slate-900" : "text-slate-400"
+                            aktif
+                              ? "text-blue-700"
+                              : terlewati
+                              ? "text-slate-900"
+                              : "text-slate-400"
                           }`}
                         >
-                          {labelUntuk(step.key)}
+                          {step.label || statusLabel[step.key]}
+                          {aktif && (
+                            <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                              Sedang berjalan
+                            </span>
+                          )}
                         </p>
-                        {step.key === "PENDING" && (
-                          <p className="text-xs text-slate-400">
-                            Pengajuan dibuat {formatTanggal(p.createdAt || p.id)}
-                          </p>
-                        )}
                       </div>
                     </div>
                   );
                 })}
               </div>
+              {p.status === "terlambat" && (
+                <p className="mt-3 rounded-lg bg-orange-50 p-3 text-xs text-orange-700">
+                  Peminjaman ini sudah melewati tanggal selesai. Segera kembalikan barang.
+                </p>
+              )}
             </div>
           )}
 
@@ -176,30 +198,50 @@ export default function StatusDetail() {
               Selesai <b className="block text-slate-800">{formatTanggal(p.tanggalSelesai)}</b>
             </p>
             <p>
-              Metode <b className="block capitalize text-slate-800">{p.metode === "antar" ? "Diantar" : "Ambil sendiri"}</b>
+              Kode Pesanan <b className="block text-slate-800">{p.kodePesanan || "-"}</b>
             </p>
             <p>
               Total <b className="block text-slate-800">{formatRupiah(p.totalBayar)}</b>
             </p>
           </div>
 
+          {/* WhatsApp ke admin */}
+          <a
+            href={linkWA(WA_ADMIN, pesanKeAdmin(p, getCurrentUser()?.nama))}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white hover:bg-green-700"
+          >
+            💬 Hubungi Admin via WhatsApp
+          </a>
+
           {/* Aksi */}
-          {p.status === "APPROVED" && !p.sudahBayar && (
+          {p.status === "disetujui" && p.sudahBayar && (
+            <p className="mt-3 rounded-lg bg-blue-50 p-3 text-xs text-blue-700">
+              Pembayaran kamu sudah diterima dan sedang menunggu verifikasi admin.
+            </p>
+          )}
+
+          {p.status === "disetujui" && !p.sudahBayar && (
             <Link
               href={`/pembayaran/${p.id}`}
-              className="mt-5 block w-full rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-blue-700"
+              className="mt-3 block w-full rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-blue-700"
             >
               Bayar Sekarang
             </Link>
           )}
 
-          {["PENDING", "APPROVED"].includes(p.status) && (
+          {(p.status === "menunggu_persetujuan" || (p.status === "disetujui" && !p.sudahBayar)) && (
             <button
               onClick={batalkan}
-              className="mt-3 w-full text-sm font-medium text-red-500 hover:text-red-600"
+              disabled={busy}
+              className="mt-3 w-full text-sm font-medium text-red-500 hover:text-red-600 disabled:opacity-50"
             >
-              Batalkan pengajuan
+              {busy ? "Memproses..." : "Batalkan pengajuan"}
             </button>
+          )}
+          {errBatal && (
+            <p className="mt-2 rounded-lg bg-red-50 p-3 text-xs text-red-600">{errBatal}</p>
           )}
         </div>
       </div>

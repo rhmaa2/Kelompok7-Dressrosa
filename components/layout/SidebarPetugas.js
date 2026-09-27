@@ -42,7 +42,13 @@ export default function SidebarPetugas() {
         </div>
       </div>
 
-      <div className="border-t border-slate-800 p-3">
+      <div className="space-y-1 border-t border-slate-800 p-3">
+        <Link
+          href="/barang"
+          className="block rounded-lg px-3 py-2 text-sm font-medium text-blue-300 hover:bg-slate-800"
+        >
+          🛒 Pesan Barang (sebagai Penyewa)
+        </Link>
         <button
           onClick={keluar}
           className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white"

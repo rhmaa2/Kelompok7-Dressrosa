@@ -17,16 +17,16 @@ export default function Pengecekan() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
 
-  useEffect(() => {
-    muat();
-  }, []);
-
   function muat() {
     setLoading(true);
     getPeminjamanLengkap()
       .then(setItems)
       .finally(() => setLoading(false));
   }
+
+  useEffect(() => {
+    muat();
+  }, []);
 
   async function ubah(id, status) {
     setBusyId(id);

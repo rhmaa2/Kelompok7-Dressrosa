@@ -2,6 +2,7 @@ import { formatRupiah } from "@/lib/utils";
 
 export default function Keranjang({ item, onQty, onRemove }) {
   return (
+<<<<<<< HEAD
     <div className="flex gap-4 border-b border-slate-200 py-4 last:border-0">
       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
         <img 
@@ -9,6 +10,15 @@ export default function Keranjang({ item, onQty, onRemove }) {
           alt={item.nama} 
           className="h-full w-full object-cover" 
         />
+=======
+    <div className="flex gap-4 border-b py-4 last:border-0">
+      <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100 text-2xl">
+        {item.foto ? (
+          <img src={item.foto} alt={item.nama} className="h-full w-full object-cover" />
+        ) : (
+          "📦"
+        )}
+>>>>>>> b5af262921bebe0badafcfb6b31722e352043fdd
       </div>
 
       <div className="min-w-0 flex-1">
