@@ -2,22 +2,31 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getCurrentUser, getPengajuan } from "@/lib/store";
+import { getCurrentUser, getPeminjamanLengkap } from "@/lib/store";
 import { formatTanggal, statusClass, statusLabel } from "@/lib/utils";
+
+const RIWAYAT = ["selesai", "dibatalkan", "ditolak"];
 
 export default function RiwayatPage() {
   const [list, setList] = useState([]);
-  
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-
+    let mounted = true;
     const u = getCurrentUser();
-    setList(
-      getPengajuan()
-        .filter((p) => (u ? p.userId === u.id : true))
-        .filter((p) => ["COMPLETED", "CANCELLED", "REJECTED"].includes(p.status))
-
-    );
-    
+    getPeminjamanLengkap()
+      .then((data) => {
+        if (!mounted) return;
+        setList(
+          data
+            .filter((p) => (u ? String(p.userId) === String(u.id) : true))
+            .filter((p) => RIWAYAT.includes(p.status))
+        );
+      })
+      .finally(() => mounted && setLoading(false));
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (
@@ -70,14 +79,16 @@ export default function RiwayatPage() {
           </tbody>
         </table>
 
-        {!list.length && (
+        {loading && (
+          <p className="p-10 text-center text-slate-400">Memuat...</p>
+        )}
+
+        {!loading && !list.length && (
           <p className="p-10 text-center text-slate-400">
             Belum ada riwayat.
           </p>
         )}
-
       </div>
     </div>
   );
 }
-
