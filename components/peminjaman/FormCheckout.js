@@ -26,11 +26,11 @@ export default function FormCheckout({ cart }) {
   const totalJaminan = cart.reduce((s, x) => s + x.jaminan * x.qty, 0);
   const totalBayar = totalSewa + totalJaminan;
 
-  function change(e) {
+  const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-  }
+  };
 
-  function submit(e) {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
 
@@ -44,7 +44,7 @@ export default function FormCheckout({ cart }) {
 
     setSaving(true);
 
-    const list = getPengajuan();
+    const list = getPengajuan() || [];
     const p = {
       id: Date.now(),
       userId: user.id,
@@ -63,15 +63,15 @@ export default function FormCheckout({ cart }) {
     savePengajuan([p, ...list]);
     clearCart();
     router.push(`/status/${p.id}`);
-  }
+  };
 
   return (
-    <form onSubmit={submit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div className="rounded-xl bg-slate-50 p-4">
-        <p className="font-semibold">Ringkasan</p>
+        <p className="font-semibold text-slate-900">Ringkasan</p>
 
         {cart.map((x) => (
-          <div key={x.barangId} className="mt-2 flex justify-between text-sm">
+          <div key={x.barangId} className="mt-2 flex justify-between text-sm text-slate-700">
             <span>
               {x.nama} × {x.qty}
             </span>
@@ -86,7 +86,7 @@ export default function FormCheckout({ cart }) {
           label="Tanggal mulai"
           type="date"
           value={form.tanggalMulai}
-          onChange={change}
+          onChange={handleChange}
         />
 
         <Field
@@ -94,17 +94,17 @@ export default function FormCheckout({ cart }) {
           label="Tanggal selesai"
           type="date"
           value={form.tanggalSelesai}
-          onChange={change}
+          onChange={handleChange}
         />
       </div>
 
       <label className="block text-sm">
-        <span className="mb-1 block font-medium">Metode pengambilan</span>
+        <span className="mb-1 block font-medium text-slate-700">Metode pengambilan</span>
         <select
           name="metode"
           value={form.metode}
-          onChange={change}
-          className="w-full rounded-lg border px-3 py-2"
+          onChange={handleChange}
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-blue-500"
         >
           <option value="ambil">Ambil sendiri</option>
           <option value="antar">Diantar</option>
@@ -116,29 +116,29 @@ export default function FormCheckout({ cart }) {
           name="alamat"
           label="Alamat pengantaran"
           value={form.alamat}
-          onChange={change}
+          onChange={handleChange}
         />
       )}
 
-      <div className="rounded-xl border p-4 text-sm">
+      <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-700">
         <div className="flex justify-between">
           <span>Durasi</span>
-          <b>{hari} hari</b>
+          <b className="text-slate-900">{hari} hari</b>
         </div>
 
         <div className="mt-2 flex justify-between">
           <span>Total sewa</span>
-          <b>{formatRupiah(totalSewa)}</b>
+          <b className="text-slate-900">{formatRupiah(totalSewa)}</b>
         </div>
 
         <div className="mt-2 flex justify-between">
           <span>Jaminan</span>
-          <b>{formatRupiah(totalJaminan)}</b>
+          <b className="text-slate-900">{formatRupiah(totalJaminan)}</b>
         </div>
 
-        <div className="mt-3 border-t pt-3 text-base">
+        <div className="mt-3 border-t border-slate-200 pt-3 text-base">
           <div className="flex justify-between">
-            <span>Total pengajuan</span>
+            <span className="font-semibold text-slate-900">Total pengajuan</span>
             <b className="text-blue-600">{formatRupiah(totalBayar)}</b>
           </div>
         </div>
@@ -158,16 +158,15 @@ export default function FormCheckout({ cart }) {
 function Field({ name, label, type = "text", value, onChange }) {
   return (
     <label className="block text-sm">
-      <span className="mb-1 block font-medium">{label}</span>
+      <span className="mb-1 block font-medium text-slate-700">{label}</span>
       <input
         required
         name={name}
         type={type}
         value={value}
         onChange={onChange}
-        className="w-full rounded-lg border px-3 py-2"
+        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-blue-500"
       />
     </label>
   );
 }
-

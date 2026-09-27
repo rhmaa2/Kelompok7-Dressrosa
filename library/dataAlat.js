@@ -43,7 +43,7 @@ export const dataAlat = [
     harga_sewa_per_hari: 150000,
     harga_jaminan: 75000,
     stok_tersedia: 10,
-    deskripsi: "Hadirkan kesan mewah dan berkelas pada acaramu dengan paket meja bundar berbalut taplak premium dan kursi elegan. Sempurna untuk menyempurnakan momen spesialmu",
+    deskripsi: "Hadirkan kesan mewah dan berkelas pada acaramu dengan paket meja bundar berbalut taplak premium dan kursi elegan. Sempurna untuk menyemarakkan momen spesialmu",
     ciri_ciri: [
       "Paket lengkap terdiri dari 1 meja bundar besar dan 10 kursi elegan.",
       "Dilengkapi taplak meja berkualitas tinggi yang bersih dan rapi.",
@@ -61,7 +61,7 @@ export const dataAlat = [
     harga_sewa_per_hari: 75000,
     harga_jaminan: 50000,
     stok_tersedia: 8,
-    deskripsi: "Set lampu dekorasi estetis (string & pendant lights) berwarna coklat dan putih  untuk menciptakan suasana hangat, elegan, dan romantis pada pesta atau acara.",
+    deskripsi: "Set lampu dekorasi estetis (string & pendant lights) berwarna coklat dan putih untuk menciptakan suasana hangat, elegan, dan romantis pada pesta atau acara.",
     ciri_ciri: [
       "Memancarkan cahaya kuning keemasan (warm white) yang lembut.",
       "Menggabungkan lampu tirai vertikal dan lampu gantung klasik bertingkat.",
@@ -86,10 +86,10 @@ export const dataAlat = [
       "Rangkaian bunga segar di atas meja dan area bawah.",
       "Cocok untuk acara pernikahan, lamaran, atau gala dinner VIP."
     ],
-    foto: "https://images.unsplash.com/photo-1751257576155-9f25d26fb6ef?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", 
+    foto: "https://images.unsplash.com/photo-1751257576155-9f25d26fb6ef?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     kondisi: "baik"
-},
-{
+  },
+  {
     id: "6",
     kategori_id: 6,
     nama_barang: "Dekorasi Balon Warna-Warni",
