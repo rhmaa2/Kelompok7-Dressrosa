@@ -16,37 +16,80 @@ export function formatTanggal(tanggal) {
 
 export function daysBetween(mulai, selesai) {
   if (!mulai || !selesai) return 0;
-  const a = new Date(mulai);
-  const b = new Date(selesai);
-  const diff = Math.round((b - a) / (1000 * 60 * 60 * 24));
-  return diff > 0 ? diff + 1 : 1;
+
+  const toUtcDay = (value) => {
+    const match = String(value).slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return NaN;
+    return Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  };
+
+  const a = toUtcDay(mulai);
+  const b = toUtcDay(selesai);
+  if (!Number.isFinite(a) || !Number.isFinite(b) || b < a) return 0;
+
+  return Math.floor((b - a) / 86400000) + 1;
 }
 
 export const statusLabel = {
-  PENDING: "Menunggu Persetujuan",
-  APPROVED: "Disetujui",
-  REJECTED: "Ditolak",
-  CANCELLED: "Dibatalkan",
-  DIPROSES: "Diproses",
-  SIAP_DIAMBIL: "Siap Diambil",
-  SIAP_DIKIRIM: "Siap Dikirim",
-  SEDANG_DI_SEWA: "Sedang Disewa",
-  DIKEMBALIKAN: "Dikembalikan",
-  COMPLETED: "Selesai",
+  menunggu_persetujuan: "Menunggu Persetujuan",
+  disetujui: "Disetujui",
+  ditolak: "Ditolak",
+  siap_diambil: "Siap Diambil",
+  sedang_dipinjam: "Sedang Dipinjam",
+  terlambat: "Terlambat",
+  dikembalikan: "Dikembalikan",
+  diperiksa: "Diperiksa",
+  selesai: "Selesai",
+  dibatalkan: "Dibatalkan",
 };
 
 export function statusClass(status) {
   const map = {
-    PENDING: "bg-amber-100 text-amber-700",
-    APPROVED: "bg-blue-100 text-blue-700",
-    REJECTED: "bg-red-100 text-red-700",
-    CANCELLED: "bg-slate-200 text-slate-600",
-    DIPROSES: "bg-blue-100 text-blue-700",
-    SIAP_DIAMBIL: "bg-indigo-100 text-indigo-700",
-    SIAP_DIKIRIM: "bg-indigo-100 text-indigo-700",
-    SEDANG_DI_SEWA: "bg-purple-100 text-purple-700",
-    DIKEMBALIKAN: "bg-cyan-100 text-cyan-700",
-    COMPLETED: "bg-blue-100 text-blue-700",
+    menunggu_persetujuan: "bg-amber-100 text-amber-700",
+    disetujui: "bg-blue-100 text-blue-700",
+    ditolak: "bg-red-100 text-red-700",
+    siap_diambil: "bg-indigo-100 text-indigo-700",
+    sedang_dipinjam: "bg-purple-100 text-purple-700",
+    terlambat: "bg-orange-100 text-orange-700",
+    dikembalikan: "bg-cyan-100 text-cyan-700",
+    diperiksa: "bg-sky-100 text-sky-700",
+    selesai: "bg-emerald-100 text-emerald-700",
+    dibatalkan: "bg-slate-200 text-slate-600",
   };
   return map[status] || "bg-slate-100 text-slate-600";
+}
+
+export const statusPembayaranLabel = {
+  menunggu_konfirmasi: "Menunggu Konfirmasi",
+  lunas: "Lunas",
+  gagal: "Gagal",
+};
+
+const ALIAS_STATUS = {
+  pending: "menunggu_persetujuan",
+  menunggu: "menunggu_persetujuan",
+  approved: "disetujui",
+  rejected: "ditolak",
+  cancelled: "dibatalkan",
+  canceled: "dibatalkan",
+  diproses: "disetujui",
+  siap_dikirim: "siap_diambil",
+  sedang_di_sewa: "sedang_dipinjam",
+  sedang_disewa: "sedang_dipinjam",
+  completed: "selesai",
+};
+
+export function normalizeStatus(status) {
+  const key = String(status ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  if (!key) return "menunggu_persetujuan";
+  if (statusLabel[key]) return key;
+  return ALIAS_STATUS[key] || "menunggu_persetujuan";
+}
+
+export function labelStatusPeminjaman(p) {
+  if (p?.status === "disetujui" && p?.sudahBayar) return "Menunggu Verifikasi Pembayaran";
+  return statusLabel[p?.status] || p?.status || "-";
 }

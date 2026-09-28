@@ -3,11 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import {
-  getUsers,
-  saveUsers,
-  setCurrentUser,
-} from "@/lib/store";
+import { registerUser, loginUser } from "@/lib/store";
 
 import Button from "@/components/ui/Button";
 
@@ -35,13 +31,11 @@ export default function FormAuth({ mode }) {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-      form.email
-    );
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
     if (!emailValid) {
       return setError("Format email tidak valid.");
     }
@@ -51,8 +45,8 @@ export default function FormAuth({ mode }) {
     }
 
     if (register) {
-      if (!form.nama || !form.noHp || !form.alamat) {
-        return setError("Nama, nomor HP, dan alamat wajib diisi.");
+      if (!form.nama || !form.noHp) {
+        return setError("Nama dan nomor HP wajib diisi.");
       }
 
       if (form.password !== form.confirm) {
@@ -62,54 +56,31 @@ export default function FormAuth({ mode }) {
 
     setLoading(true);
 
-    const users = getUsers();
-
-    if (register) {
-      const emailSudahAda = users.some(
-        (user) => user.email.toLowerCase() === form.email.toLowerCase()
-      );
-
-      if (emailSudahAda) {
-        setLoading(false);
-        return setError("Email sudah terdaftar.");
+    try {
+      if (register) {
+        await registerUser({
+          nama: form.nama,
+          email: form.email,
+          password: form.password,
+          noHp: form.noHp,
+        });
+        router.push("/barang");
+        return;
       }
 
-      const user = {
-        id: Date.now(),
-        nama: form.nama,
-        email: form.email,
-        noHp: form.noHp,
-        alamat: form.alamat,
-        password: form.password,
-        role: "user",
-      };
+      const user = await loginUser({ email: form.email, password: form.password });
 
-      saveUsers([...users, user]);
-      setCurrentUser(user);
-      router.push("/barang");
-
-      return;
-    }
-
-
-    const user = users.find(
-      (user) => user.email.toLowerCase() === form.email.toLowerCase() && user.password === form.password
-    );
-
-    if (!user) {
+      if (user.role === "admin") {
+        router.push("/admin/dashboard");
+      } else if (user.role === "petugas") {
+        router.push("/petugas/dashboard");
+      } else {
+        router.push("/barang");
+      }
+    } catch (err) {
+      setError(err.message || "Email atau password salah.");
+    } finally {
       setLoading(false);
-
-      return setError("Email atau password salah. Coba akun demo.");
-    }
-
-    setCurrentUser(user);
-
-    if (user.role === "admin") {
-      router.push("/admin/dashboard");
-    } else if (user.role === "petugas") {
-      router.push("/petugas/dashboard");
-    } else {
-      router.push("/barang");
     }
   };
 
@@ -128,13 +99,6 @@ export default function FormAuth({ mode }) {
             name="noHp"
             label="Nomor HP"
             value={form.noHp}
-            onChange={handleChange}
-          />
-
-          <Field
-            name="alamat"
-            label="Alamat"
-            value={form.alamat}
             onChange={handleChange}
           />
         </>
@@ -177,15 +141,6 @@ export default function FormAuth({ mode }) {
           ? "Daftar"
           : "Masuk"}
       </Button>
-
-      {!register && (
-        <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
-          Demo:
-          <br /> admin@eventra.test / admin123
-          <br /> petugas@eventra.test / petugas123
-          <br /> budi@eventra.test / user123
-        </div>
-      )}
     </form>
   );
 }

@@ -28,6 +28,7 @@ export function getCurrentUser() {
   }
 }
 
+// menyimpan data user
 export function setCurrentUser(user) {
   if (typeof window === "undefined") return;
   if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -45,6 +46,7 @@ async function request(path, { method = "GET", body, auth = true } = {}) {
     "X-API-Key": API_KEY,
   };
 
+  // agar server tahu siapa user yang melakukan request
   if (auth) {
     const token = getToken();
     if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -56,24 +58,41 @@ async function request(path, { method = "GET", body, auth = true } = {}) {
     body: body !== undefined ? JSON.stringify(body) : undefined,
   };
 
-
-  let res;
-  try {
-    res = await fetch(`${API_BASE}/${PROJECT}${path}`, init);
-  } catch {
+  async function ambil(url) {
+    const r = await fetch(url, init);
+    let d = null;
     try {
-      res = await fetch(`/api/proxy/${PROJECT}${path}`, init);
+      d = await r.json();
     } catch {
-      throw new Error("Tidak bisa menghubungi server API. Periksa koneksi internet kamu.");
+      d = null;
+    }
+    return { res: r, data: d };
+  }
+
+  const STATUS_DIBLOKIR = [403, 404, 405];
+
+  // mengirim request ke API
+  let hasil;
+  try {
+    hasil = await ambil(`${API_BASE}/${PROJECT}${path}`);
+  } catch {
+    hasil = null;
+  }
+
+  const perluFallback =
+    !hasil || (["PUT", "DELETE"].includes(method) && STATUS_DIBLOKIR.includes(hasil.res.status));
+
+  if (perluFallback) {
+    try {
+      hasil = await ambil(`/api/proxy/${PROJECT}${path}`); //proxy lokal
+    } catch {
+      if (!hasil) {
+        throw new Error("Tidak bisa menghubungi server API. Periksa koneksi internet kamu.");
+      }
     }
   }
 
-  let data = null;
-  try {
-    data = await res.json();
-  } catch {
-    data = null;
-  }
+  const { res, data } = hasil;
 
   if (!res.ok) {
     const message =
@@ -94,7 +113,21 @@ function crud(resource) {
     list: () => request(`/${resource}`, { method: "GET" }),
     get: (id) => request(`/${resource}/${id}`, { method: "GET" }),
     create: (body) => request(`/${resource}`, { method: "POST", body }),
-    update: (id, body) => request(`/${resource}/${id}`, { method: "PUT", body }),
+
+    update: async (id, body) => {
+      try {
+        return await request(`/${resource}/${id}`, { method: "PUT", body });
+      } catch (err) {
+        if ([403, 404, 405].includes(err.status)) {
+          try {
+            return await request(`/${resource}/${id}`, { method: "PATCH", body });
+          } catch {
+            throw err;
+          }
+        }
+        throw err;
+      }
+    },
     remove: (id) => request(`/${resource}/${id}`, { method: "DELETE" }),
   };
 }
@@ -107,14 +140,12 @@ export async function apiLogin({ email, password }) {
   const data = await request("/login", { method: "POST", body: { email, password }, auth: false });
   if (data?.token) setToken(data.token);
 
-  // v2 & v3 bisa beda bentuk. Coba beberapa kemungkinan lokasi objek user.
   const rawUser =
     data?.user ??
     data?.data?.user ??
     data?.data ??
-    (data?.id || data?.email ? data : null); // kalau user-nya taruh langsung di root
+    (data?.id || data?.email ? data : null);
 
-  // Coba beberapa kemungkinan nama field role.
   const rawRole =
     rawUser?.role ??
     rawUser?.tipe_user ??
