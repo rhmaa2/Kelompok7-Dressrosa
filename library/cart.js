@@ -13,8 +13,6 @@ function getKey() {
 function read() {
   if (typeof window === "undefined") return [];
   try {
-    // Never migrate the old global cart: doing so could expose one user's
-    // items to another account after login.
     if (localStorage.getItem(LEGACY_KEY)) localStorage.removeItem(LEGACY_KEY);
     return JSON.parse(localStorage.getItem(getKey())) || [];
   } catch {

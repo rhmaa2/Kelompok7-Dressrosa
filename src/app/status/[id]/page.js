@@ -59,7 +59,7 @@ export default function StatusDetail() {
       ? "menunggu_verifikasi"
       : p.status;
   const indexAlur = ALUR.findIndex((s) => s.key === kunciAktif);
-  // Status tidak dikenal -> anggap tahap pertama (Menunggu Persetujuan).
+
   const langkahAktif = indexAlur < 0 ? 0 : indexAlur;
 
   async function batalkan() {
