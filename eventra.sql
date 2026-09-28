@@ -33,7 +33,7 @@ CREATE TABLE kategori_barang (
 CREATE TABLE barang (
     id                      INT AUTO_INCREMENT PRIMARY KEY,
     kategori_id             INT                 NOT NULL,
-    nama_barang             VARCHAR(150)        NOT NULL,
+    nama_barang             VARCHAR(200)        NOT NULL,
     deskripsi               TEXT,
     foto                    VARCHAR(255),
     harga_sewa_per_hari     INT UNSIGNED        NOT NULL,
@@ -50,7 +50,31 @@ CREATE TABLE barang (
 );
 
 -- ---------------------------------------------------------
--- 4. PEMINJAMAN
+-- 4. PENGAJUAN_PETUGAS  (BARU)
+-- Alur: user (role masih 'penyewa') mengajukan diri jadi petugas,
+-- lalu admin approve/reject. Baru saat di-approve, users.role
+-- diubah jadi 'petugas'. Riwayat pengajuan (termasuk yang pernah
+-- ditolak lalu mengajukan ulang) tetap tersimpan di sini.
+-- ---------------------------------------------------------
+CREATE TABLE pengajuan_petugas (
+    id              INT AUTO_INCREMENT PRIMARY KEY,
+    user_id         INT                 NOT NULL,
+    status          ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+    catatan         TEXT,
+    reviewed_by     INT                 NULL,
+    reviewed_at     TIMESTAMP           NULL,
+    created_at      TIMESTAMP           DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_pengajuan_petugas_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_pengajuan_petugas_reviewer
+        FOREIGN KEY (reviewed_by) REFERENCES users(id)
+        ON UPDATE CASCADE ON DELETE SET NULL
+);
+
+-- ---------------------------------------------------------
+-- 5. PEMINJAMAN
 -- "Header" transaksi -> 1 baris = 1 pengajuan peminjaman
 -- ---------------------------------------------------------
 CREATE TABLE peminjaman (
@@ -85,8 +109,8 @@ CREATE TABLE peminjaman (
 );
 
 -- ---------------------------------------------------------
--- 5. DETAIL_PEMINJAMAN
--- "Isi keranjang" -> barang & jumlah dalam 1 peminjaman
+-- 6. DETAIL_PEMINJAMAN
+-- "Isi keranjang" saat pengajuan dibuat -> barang & jumlah dalam 1 peminjaman
 -- ---------------------------------------------------------
 CREATE TABLE detail_peminjaman (
     id                  INT AUTO_INCREMENT PRIMARY KEY,
@@ -105,17 +129,47 @@ CREATE TABLE detail_peminjaman (
 );
 
 -- ---------------------------------------------------------
--- 6. PEMBAYARAN
--- Bukti transfer DP / lunas / refund jaminan
+-- 7. KERANJANG / KERANJANG_ITEM  (BARU, OPSIONAL)
+-- Supaya keranjang tersimpan per akun di server (tidak hilang saat
+-- ganti browser/device), bukan cuma di localStorage seperti sekarang.
+-- Boleh dilewati kalau keranjang mau tetap disimpan di sisi klien saja.
+-- ---------------------------------------------------------
+CREATE TABLE keranjang_item (
+    id              INT AUTO_INCREMENT PRIMARY KEY,
+    user_id         INT                 NOT NULL,
+    barang_id       INT                 NOT NULL,
+    jumlah          INT UNSIGNED        NOT NULL DEFAULT 1,
+    created_at      TIMESTAMP           DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP           DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_keranjang_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_keranjang_barang
+        FOREIGN KEY (barang_id) REFERENCES barang(id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT uq_keranjang_user_barang UNIQUE (user_id, barang_id)
+);
+
+-- ---------------------------------------------------------
+-- 8. PEMBAYARAN
+-- Bukti transfer DP / lunas / refund jaminan.
+-- Ditambah kolom metode/channel/referensi/expired_at supaya bisa
+-- menyimpan pilihan metode pembayaran (VA, e-wallet, QRIS, kartu)
+-- dari halaman pembayaran.
 -- ---------------------------------------------------------
 CREATE TABLE pembayaran (
     id                  INT AUTO_INCREMENT PRIMARY KEY,
     peminjaman_id       INT                 NOT NULL,
     jenis               ENUM('DP', 'lunas', 'refund_jaminan') NOT NULL,
+    metode              ENUM('virtual_account', 'e_wallet', 'qris', 'kartu_kredit') NULL,
+    channel             VARCHAR(50)         NULL,  -- mis. 'BCA', 'GoPay', 'Visa'
+    nomor_referensi     VARCHAR(100)        NULL,  -- nomor VA / ID transaksi payment gateway
     jumlah              INT UNSIGNED        NOT NULL,
     bukti_bayar         VARCHAR(255),
     status_verifikasi   ENUM('pending', 'diverifikasi', 'ditolak') NOT NULL DEFAULT 'pending',
     tanggal_bayar       TIMESTAMP           DEFAULT CURRENT_TIMESTAMP,
+    expired_at          TIMESTAMP           NULL,  -- batas waktu bayar (khusus VA)
     verified_by         INT                 NULL,
 
     CONSTRAINT fk_pembayaran_peminjaman
@@ -127,7 +181,7 @@ CREATE TABLE pembayaran (
 );
 
 -- ---------------------------------------------------------
--- 7. PENGECEKAN_BARANG
+-- 9. PENGECEKAN_BARANG
 -- Catatan kondisi barang oleh petugas (sebelum kirim & saat kembali)
 -- ---------------------------------------------------------
 CREATE TABLE pengecekan_barang (
@@ -135,7 +189,7 @@ CREATE TABLE pengecekan_barang (
     peminjaman_id       INT                 NOT NULL,
     petugas_id          INT                 NOT NULL,
     tipe                ENUM('sebelum_kirim', 'saat_kembali') NOT NULL,
-    kondisi             VARCHAR(50)         NOT NULL DEFAULT 'baik',
+    kondisi             VARCHAR(200)        NOT NULL DEFAULT 'baik',
     catatan_kerusakan   TEXT,
     foto                VARCHAR(255),
     tanggal_cek         TIMESTAMP           DEFAULT CURRENT_TIMESTAMP,
@@ -149,8 +203,11 @@ CREATE TABLE pengecekan_barang (
 );
 
 -- ---------------------------------------------------------
--- 8. RIWAYAT_STATUS
--- Log setiap perubahan status -> untuk timeline di halaman status
+-- 10. RIWAYAT_STATUS
+-- Log setiap perubahan status -> untuk timeline di halaman status.
+-- Setiap kali status di tabel peminjaman berubah (approve, tandai
+-- siap, tandai terkirim, tandai dikembalikan, selesai, batalkan,
+-- dst.) aplikasi WAJIB insert satu baris ke sini juga.
 -- ---------------------------------------------------------
 CREATE TABLE riwayat_status (
     id                  INT AUTO_INCREMENT PRIMARY KEY,
@@ -169,7 +226,7 @@ CREATE TABLE riwayat_status (
 );
 
 -- ---------------------------------------------------------
--- 9. ULASAN
+-- 11. ULASAN
 -- Rating & komentar barang setelah selesai sewa (opsional)
 -- ---------------------------------------------------------
 CREATE TABLE ulasan (
@@ -191,13 +248,16 @@ CREATE TABLE ulasan (
 -- =========================================================
 -- INDEX TAMBAHAN
 -- =========================================================
-CREATE INDEX idx_barang_kategori       ON barang(kategori_id);
-CREATE INDEX idx_peminjaman_user       ON peminjaman(user_id);
-CREATE INDEX idx_peminjaman_status     ON peminjaman(status);
-CREATE INDEX idx_detail_peminjaman     ON detail_peminjaman(peminjaman_id);
-CREATE INDEX idx_pembayaran_peminjaman ON pembayaran(peminjaman_id);
-CREATE INDEX idx_pengecekan_peminjaman ON pengecekan_barang(peminjaman_id);
-CREATE INDEX idx_riwayat_peminjaman    ON riwayat_status(peminjaman_id);
+CREATE INDEX idx_barang_kategori         ON barang(kategori_id);
+CREATE INDEX idx_pengajuan_petugas_user  ON pengajuan_petugas(user_id);
+CREATE INDEX idx_pengajuan_petugas_status ON pengajuan_petugas(status);
+CREATE INDEX idx_peminjaman_user         ON peminjaman(user_id);
+CREATE INDEX idx_peminjaman_status       ON peminjaman(status);
+CREATE INDEX idx_keranjang_user          ON keranjang_item(user_id);
+CREATE INDEX idx_detail_peminjaman       ON detail_peminjaman(peminjaman_id);
+CREATE INDEX idx_pembayaran_peminjaman   ON pembayaran(peminjaman_id);
+CREATE INDEX idx_pengecekan_peminjaman   ON pengecekan_barang(peminjaman_id);
+CREATE INDEX idx_riwayat_peminjaman      ON riwayat_status(peminjaman_id);
 
 -- =========================================================
 -- CONTOH DATA AWAL
